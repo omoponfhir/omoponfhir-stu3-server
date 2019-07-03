@@ -10,12 +10,20 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
+	<!-- HAPI projects use the HAPI-FHIR base POM as their base. You don't need 
+		this for your own projects. One thing to note though: -->
+	<parent>
+		<groupId>edu.gatech.chai</groupId>
+		<artifactId>omoponfhir</artifactId>
+		<version>1.0.0</version>
+		<relativePath>../omoponfhir-main/pom.xml</relativePath>
+	</parent>
+
 	<groupId>edu.gatech.chai</groupId>
 	<artifactId>omoponfhir-stu3-server</artifactId>
-	<version>1.0.0</version>
 	<packaging>war</packaging>
 
-	<name>OMOPonFHIR RESTful Server</name>
+	<name>GT-FHIR2 RESTful Server</name>
 
 	<repositories>
 		<repository>
@@ -28,13 +36,6 @@
 	</repositories>
 
 	<properties>
-		<hapi_stable_version>[3.8.0,)</hapi_stable_version>
-		<hapi_current_version>3.6.0-SNAPSHOT</hapi_current_version>
-		<thymeleaf-version>3.0.9.RELEASE</thymeleaf-version>
-		<spring_version>5.0.8.RELEASE</spring_version>
-		<hibernate_version>5.3.1.Final</hibernate_version>
-		<hibernate_search_version>5.10.1.Final</hibernate_search_version>
-		<omoponfhir_module_version>1.0.0</omoponfhir_module_version>
 	</properties>
 
 	<dependencies>
@@ -86,14 +87,13 @@
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
-			<version>1.2.3</version>
 		</dependency>
 
 		<!-- Needed for JEE/Servlet support -->
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>javax.servlet-api</artifactId>
-			<version>3.1.0</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<!-- If you are using HAPI narrative generation, you will need to include 
@@ -101,7 +101,6 @@
 		<dependency>
 			<groupId>org.thymeleaf</groupId>
 			<artifactId>thymeleaf</artifactId>
-			<version>${thymeleaf-version}</version>
 		</dependency>
 
 		<!-- Security OAuth2 related libraries -->
@@ -116,79 +115,49 @@
 			<version>1.0.0</version>
 		</dependency>
 
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-beans</artifactId>
-			<version>${spring_version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-context</artifactId>
-			<version>${spring_version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-context-support</artifactId>
-			<version>${spring_version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-core</artifactId>
-			<version>${spring_version}</version>
-		</dependency>
 		<!-- Used for CORS support -->
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
-			<version>${spring_version}</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
 		<dependency>
 			<groupId>org.xerial</groupId>
 			<artifactId>sqlite-jdbc</artifactId>
-			<version>3.28.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-dbcp2</artifactId>
-			<version>2.6.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
-			<version>9.4.1211.jre7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-core</artifactId>
-			<version>${hibernate_version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-ehcache</artifactId>
-			<version>${hibernate_version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-entitymanager</artifactId>
-			<version>${hibernate_version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-validator</artifactId>
-			<version>${hibernate_version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-search-orm</artifactId>
-			<version>${hibernate_search_version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-envers</artifactId>
-			<version>${hibernate_version}</version>
 		</dependency>
 		<dependency>
 			<groupId>edu.gatech.chai</groupId>
@@ -198,7 +167,6 @@
 		<dependency>
 			<groupId>javax.xml.bind</groupId>
 			<artifactId>jaxb-api</artifactId>
-			<version>2.3.1</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt -->
