@@ -12,16 +12,11 @@
 
 	<!-- HAPI projects use the HAPI-FHIR base POM as their base. You don't need 
 		this for your own projects. One thing to note though: -->
-	<parent>
-		<groupId>edu.gatech.chai</groupId>
-		<artifactId>omoponfhir</artifactId>
-		<version>1.0.0</version>
-		<relativePath>../omoponfhir-main/pom.xml</relativePath>
-	</parent>
 
 	<groupId>edu.gatech.chai</groupId>
 	<artifactId>omoponfhir-stu3-server</artifactId>
 	<packaging>war</packaging>
+	<version>1.0.1</version>
 
 	<name>GT-FHIR2 RESTful Server</name>
 
@@ -36,6 +31,41 @@
 	</repositories>
 
 	<properties>
+		<hapi_stable_version>3.8.0</hapi_stable_version>
+		<hapi_current_version>3.8.0-SNAPSHOT</hapi_current_version>
+		<omoponfhir_module_version>1.0.1</omoponfhir_module_version>
+		<!-- configure timestamp in MANIFEST.MF for maven-war-provider -->
+		<maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>
+
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+		<!-- Dependency Versions -->
+		<derby_version>10.14.2.0</derby_version>
+		<jersey_version>2.25.1</jersey_version>
+		<jetty_version>9.4.17.v20190418</jetty_version>
+		<hibernate_version>5.4.3.Final</hibernate_version>
+		<hibernate_validator_version>5.4.3.Final</hibernate_validator_version>
+		<!-- Update lucene version when you update hibernate-search version -->
+		<hibernate_search_version>5.11.2.Final</hibernate_search_version>
+		<jackson_version>2.9.9</jackson_version>
+		<jaxb_api_version>2.3.1</jaxb_api_version>
+		<lucene_version>5.5.5</lucene_version>
+		<maven_assembly_plugin_version>2.5.3</maven_assembly_plugin_version>
+		<maven_license_plugin_version>1.8</maven_license_plugin_version>
+		<phloc_schematron_version>2.7.1</phloc_schematron_version>
+		<phloc_commons_version>4.4.11</phloc_commons_version>
+		<spring_version>5.1.7.RELEASE</spring_version>
+		<spring_data_version>2.1.8.RELEASE</spring_data_version>
+		<spring-boot.version>2.1.1.RELEASE</spring-boot.version>
+		<thymeleaf-version>3.0.9.RELEASE</thymeleaf-version>
+
+		<!-- We are aiming to still work on a very old version of SLF4j even though 
+			we depend on the newest, just to be nice to users of the API. This version 
+			is tested in the hapi-fhir-cobertura. -->
+		<slf4j_target_version>1.6.0</slf4j_target_version>
+
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<ebay_cors_filter_version>1.0.1</ebay_cors_filter_version>
 	</properties>
 
 	<dependencies>
@@ -51,6 +81,13 @@
 		<dependency>
 			<groupId>ca.uhn.hapi.fhir</groupId>
 			<artifactId>hapi-fhir-server</artifactId>
+			<version>${hapi_stable_version}</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/ca.uhn.hapi.fhir/hapi-fhir-client -->
+		<dependency>
+			<groupId>ca.uhn.hapi.fhir</groupId>
+			<artifactId>hapi-fhir-client</artifactId>
 			<version>${hapi_stable_version}</version>
 		</dependency>
 
@@ -87,13 +124,14 @@
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
+			<version>1.2.3</version>
 		</dependency>
 
 		<!-- Needed for JEE/Servlet support -->
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>javax.servlet-api</artifactId>
-			<scope>provided</scope>
+			<version>3.1.0</version>
 		</dependency>
 
 		<!-- If you are using HAPI narrative generation, you will need to include 
@@ -101,6 +139,13 @@
 		<dependency>
 			<groupId>org.thymeleaf</groupId>
 			<artifactId>thymeleaf</artifactId>
+			<version>${thymeleaf-version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.thymeleaf/thymeleaf-spring5 -->
+		<dependency>
+			<groupId>org.thymeleaf</groupId>
+			<artifactId>thymeleaf-spring5</artifactId>
+			<version>${thymeleaf-version}</version>
 		</dependency>
 
 		<!-- Security OAuth2 related libraries -->
@@ -119,46 +164,120 @@
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
+			<version>${spring_version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webmvc</artifactId>
+			<version>${spring_version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-beans</artifactId>
+			<version>${spring_version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>${spring_version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context-support</artifactId>
+			<version>${spring_version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
+			<version>${spring_version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-jpa</artifactId>
+			<version>${spring_data_version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-messaging</artifactId>
+			<version>${spring_version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-orm</artifactId>
+			<version>${spring_version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
+			<version>${spring_version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-tx</artifactId>
+			<version>${spring_version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-websocket</artifactId>
+			<version>${spring_version}</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
 		<dependency>
 			<groupId>org.xerial</groupId>
 			<artifactId>sqlite-jdbc</artifactId>
+			<version>3.27.2.1</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-dbcp2</artifactId>
+			<version>2.6.0</version>
 		</dependency>
+
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
+			<version>42.2.6</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-core</artifactId>
+			<version>${hibernate_version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-ehcache</artifactId>
+			<version>${hibernate_version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-entitymanager</artifactId>
+			<version>${hibernate_version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-validator</artifactId>
+			<version>${hibernate_validator_version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-search-orm</artifactId>
+			<version>${hibernate_search_version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-envers</artifactId>
+			<version>${hibernate_version}</version>
 		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/javax.persistence/persistence-api -->
+		<dependency>
+			<groupId>javax.persistence</groupId>
+			<artifactId>persistence-api</artifactId>
+			<version>1.0</version>
+		</dependency>
+
 		<dependency>
 			<groupId>edu.gatech.chai</groupId>
 			<artifactId>omoponfhir-omopv5-stu3-mapping</artifactId>
@@ -167,6 +286,7 @@
 		<dependency>
 			<groupId>javax.xml.bind</groupId>
 			<artifactId>jaxb-api</artifactId>
+			<version>${jaxb_api_version}</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt -->
@@ -175,6 +295,21 @@
 			<artifactId>jjwt</artifactId>
 			<version>0.9.1</version>
 		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.5</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/caffeine -->
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+			<version>2.7.0</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -210,6 +345,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-war-plugin</artifactId>
+				<version>3.2.3</version>
 				<configuration>
 					<overlays>
 						<overlay>
@@ -225,6 +361,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-deploy-plugin</artifactId>
+				<version>3.0.0-M1</version>
 				<configuration>
 					<skip>false</skip>
 				</configuration>
