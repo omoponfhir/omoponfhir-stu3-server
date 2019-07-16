@@ -36,6 +36,10 @@
 		<param-value>100</param-value>
 	</context-param>
 	<context-param>
+		<param-name>localMappingFilePath</param-name>
+		<param-value>${project.basedir}/WEB-INF/localCodeMap/</param-value>
+	</context-param>
+	<context-param>
 		<param-name>terminologyServerUrl</param-name>
 		<param-value>http://measure.eval.kanvix.com/cqf-ruler/baseDstu3</param-value>
 	</context-param>
