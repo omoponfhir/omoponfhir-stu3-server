@@ -29,17 +29,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 //import edu.gatech.chai.omopv5.jpa.service.CareSiteService;
 //import edu.gatech.chai.omopv5.jpa.service.CareSiteServiceImp;
 
 @Configuration
+@EnableScheduling
 @EnableTransactionManagement
 @ComponentScans(value = { @ComponentScan("edu.gatech.chai.omopv5.jpa.dao"),
 		@ComponentScan("edu.gatech.chai.omopv5.dba.service"),
-		@ComponentScan("edu.gatech.chai.smart.jpa.dao"),
-		@ComponentScan("edu.gatech.chai.smart.jpa.service")})
+		@ComponentScan("edu.gatech.chai.omoponfhir.local.task")})
 @ImportResource({
     "classpath:database-config.xml"
 })
@@ -59,10 +60,10 @@ public class FhirServerConfig {
 	@Bean()
 	public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
 		LocalContainerEntityManagerFactoryBean retVal = new LocalContainerEntityManagerFactoryBean();
-		retVal.setPersistenceUnitName("GT-FHIR2");
+		retVal.setPersistenceUnitName("OMOPonFHIRv1");
 //		retVal.setDataSource(dataSource());
 		retVal.setDataSource(dataSource);
-		retVal.setPackagesToScan("edu.gatech.chai.omopv5.model.entity", "edu.gatech.chai.smart.jpa.entity");
+		retVal.setPackagesToScan("edu.gatech.chai.omopv5.model.entity");
 		retVal.setPersistenceProvider(new HibernatePersistenceProvider());
 		retVal.setJpaProperties(jpaProperties());
 		return retVal;
