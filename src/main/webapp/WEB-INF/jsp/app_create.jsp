@@ -13,7 +13,7 @@
 	%>
 	<p>Please Create Your App</p>
 	<p>
-	<form action="/smart/app-new">
+	<form action="${base_url}/smart/app-new">
 		<b>Application Name</b><br /> &nbsp;&nbsp;<input type="text" name="app_name" value="${app_name}"><br />
 		<br /> 
 		<b>Client-id</b><br />
@@ -137,7 +137,7 @@
 	<%
 		} else {
 	%>
-	Unauthorized Access
+	Unauthorized Access. <a href="${base_url}/smart/">Go to main page.</a>
 	<%
 		}
 	%>

@@ -10,11 +10,11 @@
 </head>
 <body>
 <p><b>This page simulates SMART on FHIR App Launch</b></p>
-<p><a href="/smart/app-create/">Click here to create a new application</a></p><br/>
+<p><a href="${base_url}/smart/app-create/">Click here to create a new application</a></p><br/>
 <p>Registered Applications:</p>
 
 <c:forEach items="${appList.appEntries}" var = "appEntry">
-	<a href="/smart/app-view/?client_id=${appEntry.appId}">${appEntry.appName}</a><br/><br/>
+	<a href="${base_url}/smart/app-view/?client_id=${appEntry.appId}">${appEntry.appName}</a><br/><br/>
 </c:forEach>
 
 </body>

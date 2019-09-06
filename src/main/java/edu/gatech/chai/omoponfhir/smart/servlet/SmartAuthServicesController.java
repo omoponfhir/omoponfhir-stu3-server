@@ -20,7 +20,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.SecureRandom;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -38,6 +37,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -47,11 +47,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.SessionAttributes;
-import org.springframework.web.context.ContextLoaderListener;
-import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.ModelAndView;
 
-import edu.gatech.chai.omoponfhir.smart.dao.BaseSmartOnFhir;
 import edu.gatech.chai.omoponfhir.smart.dao.SmartOnFhirAppImpl;
 import edu.gatech.chai.omoponfhir.smart.model.SmartOnFhirAppEntry;
 import edu.gatech.chai.omoponfhir.smart.model.SmartOnFhirAppListContainer;
@@ -71,20 +69,32 @@ public class SmartAuthServicesController {
 	private static final long serialVersionUID = 1L;
 	final static Logger logger = LoggerFactory.getLogger(SmartAuthServicesController.class);
 	
-	private WebApplicationContext myAppCtx;
-
 	private String client_id;
 	private String client_secret;
 	private String jwtSecret;
 	private String smartStyleUrl;
 	private boolean simEhr;
 
+	private String baseUrl = "";
+	
 	@Autowired
 	protected SmartOnFhirAppImpl smartOnFhirApp;
 
 	public SmartAuthServicesController() {
 		super();
 
+		String serverBaseUrl = System.getenv("SERVERBASE_URL");
+		if (serverBaseUrl != null && !serverBaseUrl.isEmpty()) {
+			if (serverBaseUrl.endsWith("/")) {
+				serverBaseUrl = serverBaseUrl.substring(0, serverBaseUrl.length()-2);
+			}
+			
+			int lastSlashIndex = serverBaseUrl.lastIndexOf("/");
+			if (lastSlashIndex > 0) {
+				baseUrl = serverBaseUrl.substring(0, lastSlashIndex);
+			}
+		}
+		
 		client_id = System.getenv("SMART_CLIENTID");
 		client_secret = System.getenv("SMART_CLIENTSECRET");
 
@@ -104,8 +114,6 @@ public class SmartAuthServicesController {
 		}
 
 		simEhr = false;
-
-		myAppCtx = ContextLoaderListener.getCurrentWebApplicationContext();
 	}
 
 	@ModelAttribute("oauth2attr")
@@ -168,6 +176,9 @@ public class SmartAuthServicesController {
 		String errorDesc;
 		String error;
 
+		// Alway pass this information so that JSP can route to correct endpoint
+		model.addAttribute("base_url", baseUrl);
+		
 		SmartOnFhirAppEntry smartApp = smartOnFhirApp.getSmartOnFhirApp(clientId);
 		if (smartApp == null) {
 			// Invalid client-id. We shour send with bad request.
@@ -265,7 +276,6 @@ public class SmartAuthServicesController {
 		// patient, encounter, provider, etc. We however do not have EHR that can
 		// store the information as this is initiated from smart-launcher.
 		// The context itself has those information encoded. Decode it now.
-		String code = null;
 		String patientId = null;
 		if (launchContext != null && !launchContext.isEmpty()) {
 			String launchCode = new String(Base64.decodeBase64(launchContext));
@@ -320,6 +330,9 @@ public class SmartAuthServicesController {
 			@RequestParam(name = "redirect_uri", required = true) String redirectUri,
 			@RequestParam(name = "client_id", required = true) String appId, Model model) {
 
+		// Alway pass this information so that JSP can route to correct endpoint
+		model.addAttribute("base_url", baseUrl);
+
 		logger.debug("Token Received:\ncode: "+code+"\nredirect_uri:"+redirectUri+"\nclient_id:"+appId+"\n");
 		SmartOnFhirAppEntry smartApp = smartOnFhirApp.getSmartOnFhirApp(appId, code, redirectUri);
 		if (smartApp == null) {
@@ -367,6 +380,10 @@ public class SmartAuthServicesController {
 	public ResponseEntity<IntrospectResponse> introspect(
 			@RequestParam(name = "token", required = true) String token,
 			Model model) {
+		
+		// Alway pass this information so that JSP can route to correct endpoint
+		model.addAttribute("base_url", baseUrl);
+
 		SmartOnFhirAppEntry smartApp = smartOnFhirApp.getSmartOnFhirAppByToken(token);
 		if (smartApp == null) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Token");
@@ -386,8 +403,11 @@ public class SmartAuthServicesController {
 	}
 	
 	@GetMapping(value = "/after-auth")
-	public String afterAuth(Model model, @ModelAttribute("oauth2attr") JSONObject oauth2attr) {
+	public ModelAndView afterAuth(ModelMap model, @ModelAttribute("oauth2attr") JSONObject oauth2attr) {
 		String error, errorDesc;
+
+		// Alway pass this information so that JSP can route to correct endpoint
+		model.addAttribute("base_url", baseUrl);
 
 		if (oauth2attr == null || !oauth2attr.has("client_id") || !oauth2attr.has("redirect_uri")) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid request");
@@ -397,15 +417,19 @@ public class SmartAuthServicesController {
 		String state = oauth2attr.getString("state");
 		if (code != null && !code.isEmpty()) {
 			smartOnFhirApp.putAuthorizationCode(oauth2attr.getString("client_id"), code);
-			return "redirect:" + oauth2attr.getString("redirect_uri") + "?code=" + code + "&state="
-					+ state;
+//			return "redirect:" + oauth2attr.getString("redirect_uri") + "?code=" + code + "&state="
+//					+ state;
+			model.addAttribute("code", code);
+			model.addAttribute("state", state);
+			return new ModelAndView("redirect:" + oauth2attr.getString("redirect_uri"), model);
 		}
 
 		try {
 			error = "server_error";
 			errorDesc = encodeValue("Internal Server Error");
-			return "redirect:" + oauth2attr.getString("redirect_uri") + "?error=" + error + "&error_description="
-					+ errorDesc + "&sate=" + state;
+			model.addAttribute("error", error);
+			model.addAttribute("error_description", errorDesc);
+			return new ModelAndView("redirect:" + oauth2attr.getString("redirect_uri"), model);
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Error", e);
@@ -416,6 +440,10 @@ public class SmartAuthServicesController {
 	public String appCreate(Model model) {
 		String uuid = "";
 		boolean exists = true;
+		
+		// Alway pass this information so that JSP can route to correct endpoint
+		model.addAttribute("base_url", baseUrl);
+
 		while (exists) {
 			uuid = UUID.randomUUID().toString();
 			exists = smartOnFhirApp.exists(uuid);
@@ -500,6 +528,9 @@ public class SmartAuthServicesController {
 			@RequestParam(name = "patient_procedure_r", required = false) String patient_procedure_r,
 			Model model) {
 		
+		// Alway pass this information so that JSP can route to correct endpoint
+		model.addAttribute("base_url", baseUrl);
+
 		String scope = makeScope(appType, 
 				user_condition_r, 
 				user_documentreference_r, 
@@ -557,6 +588,9 @@ public class SmartAuthServicesController {
 			@RequestParam(name = "patient_procedure_r", required = false) String patient_procedure_r,
 			Model model) {
 		
+		// Alway pass this information so that JSP can route to correct endpoint
+		model.addAttribute("base_url", baseUrl);
+
 		String scope = makeScope(appType, 
 				user_condition_r, 
 				user_documentreference_r, 
@@ -599,6 +633,9 @@ public class SmartAuthServicesController {
 			@RequestParam(name = "client_id", required = true) String appId,
 			Model model) {
 		
+		// Alway pass this information so that JSP can route to correct endpoint
+		model.addAttribute("base_url", baseUrl);
+
 		SmartOnFhirAppEntry appEntry = smartOnFhirApp.getSmartOnFhirApp(appId);
 		if (appEntry == null) {
 			model.addAttribute("error", "Invaid client Id");
@@ -614,6 +651,9 @@ public class SmartAuthServicesController {
 		SmartOnFhirAppEntry appEntry = smartOnFhirApp.getSmartOnFhirApp(appId);
 		populateModel (model, appEntry);
 		
+		// Alway pass this information so that JSP can route to correct endpoint
+		model.addAttribute("base_url", baseUrl);
+
 		return "app_view";
 	}
 	
@@ -621,6 +661,9 @@ public class SmartAuthServicesController {
 	public String appDelete(@RequestParam(name = "client_id", required = true) String appId, Model model) {
 		smartOnFhirApp.delete(appId);
 		
+		// Alway pass this information so that JSP can route to correct endpoint
+		model.addAttribute("base_url", baseUrl);
+
 		return goIndex(model);
 	}
 	
@@ -630,6 +673,10 @@ public class SmartAuthServicesController {
 			@RequestParam(name = "patient_id", required = true) String patientId,
 			Model model
 			) {
+		
+		// Alway pass this information so that JSP can route to correct endpoint
+		model.addAttribute("base_url", baseUrl);
+
 		SmartOnFhirAppEntry smartApp = smartOnFhirApp.getSmartOnFhirApp(appId);
 		
 		// Create launch context
@@ -684,6 +731,9 @@ public class SmartAuthServicesController {
 
 	@GetMapping(value = "")
 	public String goIndex(Model model) {
+		// Alway pass this information so that JSP can route to correct endpoint
+		model.addAttribute("base_url", baseUrl);
+
 		List<SmartOnFhirAppEntry> appEntries = smartOnFhirApp.get();
 
 		SmartOnFhirAppListContainer appList = new SmartOnFhirAppListContainer();

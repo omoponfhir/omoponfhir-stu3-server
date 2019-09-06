@@ -15,7 +15,7 @@
 	%>
 	<p>Please Create Your App</p>
 	<p>
-	<form action="/smart/app-update">
+	<form action="${base_url}/smart/app-update">
 		<b>Application Name</b><br /> &nbsp;&nbsp;<input type="text" name="app_name" value="${app_name}"><br />
 		<br /> 
 		<b>Client-id</b><br />

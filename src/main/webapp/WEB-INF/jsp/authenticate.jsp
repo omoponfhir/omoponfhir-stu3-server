@@ -18,7 +18,7 @@
 	<script>
 		function redirect() {
 			var url = "http://www.(url).com";
-			window.location.href = "/smart/after-auth"
+			window.location.href = "${base_url}/smart/after-auth"
 		}
 	</script>
 <%  } else { %>
