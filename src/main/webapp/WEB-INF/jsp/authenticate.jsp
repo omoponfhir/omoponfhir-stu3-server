@@ -14,13 +14,7 @@
 	<p>In real world, user authentication should happen here. We just
 		authenticate all as we are simulation authentication. Plerase just
 		click authenticate button</p>
-	<button type="button" onClick="redirect()">Authenticate!</button>
-	<script>
-		function redirect() {
-			var url = "http://www.(url).com";
-			window.location.href = "${base_url}/smart/after-auth"
-		}
-	</script>
+	<button onclick="window.location.href='${base_url}/smart/after-auth';">Authenticate!</button>	
 <%  } else { %>
 	<p>Unauthorized Access</p>
 <%  } %>
