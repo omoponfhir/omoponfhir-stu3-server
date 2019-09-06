@@ -24,7 +24,7 @@
 		String launchUri = (String) request.getAttribute("launch_uri");
 		if (launchUri != null && !launchUri.isEmpty()) {
 	%>	
-		<form action="/smart/app-launch">
+		<form action="${base_url}/smart/app-launch">
 			<input type="submit" value="Launch App"> patient id: <input type="text" name="patient_id"> 
 			<input type="hidden" name="client_id" value="${client_id}">
 		</form>
@@ -231,8 +231,8 @@
 		</table>
 	</p>
 	
-	<button onclick="window.location.href='/smart/app-delete/?client_id=${client_id}';">Delete</button>
-	<button onclick="window.location.href='/smart/app-edit/?client_id=${client_id}';">Edit</button>
+	<button onclick="window.location.href='${base_url}/smart/app-delete/?client_id=${client_id}';">Delete</button>
+	<button onclick="window.location.href='${base_url}/smart/app-edit/?client_id=${client_id}';">Edit</button>
 	<%
 		} else {
 	%>
