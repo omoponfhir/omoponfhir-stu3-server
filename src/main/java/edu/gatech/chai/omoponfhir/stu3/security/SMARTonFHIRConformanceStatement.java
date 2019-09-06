@@ -51,9 +51,8 @@ public class SMARTonFHIRConformanceStatement extends ServerCapabilityStatementPr
 	static String tokenURI = "token";
 	static String registerURI = "register";
 
-	String authorizeURIvalue = "http://localhost:9085/authorize";
-	String tokenURIvalue = "http://localhost:9085/token";
-	String registerURIvalue = "http://localhost:9085/register";
+	String authorizeURIvalue = "http://localhost:8080/authorize";
+	String tokenURIvalue = "http://localhost:8080/token";
 
 	public SMARTonFHIRConformanceStatement(RestfulServer theRestfulServer) {
 		super(theRestfulServer);
@@ -100,13 +99,13 @@ public class SMARTonFHIRConformanceStatement extends ServerCapabilityStatementPr
 		tokenExtension.setUrl(tokenURI);
 		tokenExtension.setValue(new UriType(tokenURIvalue));
 
-		Extension registerExtension = new Extension();
-		registerExtension.setUrl(registerURI);
-		registerExtension.setValue(new UriType(registerURIvalue));
+//		Extension registerExtension = new Extension();
+//		registerExtension.setUrl(registerURI);
+//		registerExtension.setValue(new UriType(registerURIvalue));
 
 		secExtension.addExtension(authorizeExtension);
 		secExtension.addExtension(tokenExtension);
-		secExtension.addExtension(registerExtension);
+//		secExtension.addExtension(registerExtension);
 
 		restSec.addExtension(secExtension);
 
@@ -128,14 +127,10 @@ public class SMARTonFHIRConformanceStatement extends ServerCapabilityStatementPr
 	}
 
 	public void setAuthServerUrl(String url) {
-		if (url.endsWith("/")) {
-			authorizeURIvalue = url + "authorize";
-			tokenURIvalue = url + "token";
-			registerURIvalue = url + "register";
-		} else {
-			authorizeURIvalue = url + "/authorize";
-			tokenURIvalue = url + "/token";
-			registerURIvalue = url + "/register";
-		}
+		authorizeURIvalue = url;
+	}
+	
+	public void setTokenServerUrl(String url) {
+		tokenURIvalue = url;
 	}
 }

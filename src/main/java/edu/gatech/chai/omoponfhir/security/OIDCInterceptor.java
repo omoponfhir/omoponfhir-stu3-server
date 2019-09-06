@@ -47,6 +47,7 @@ public class OIDCInterceptor extends InterceptorAdapter {
 
 	public OIDCInterceptor() {
 		authType = "None";  // Default allows anonymous access
+		introspectUrl = "http://localhost:8080/introspect";
 	}
 
 	@Override

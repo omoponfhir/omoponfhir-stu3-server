@@ -65,6 +65,19 @@ public class SmartLauncherCodec {
 		codeToValue.put("l", "launch_cds");
 	}
 	
+	static JSONObject encode(JSONObject code) {
+		JSONObject result = new JSONObject();
+
+		for (Iterator<?> iter = code.keySet().iterator(); iter.hasNext();) {
+			String key = (String) iter.next();
+			String encodedKey = valueToCode.get(key);
+			
+			result.put(encodedKey, code.getString(key));
+		}
+		
+		return result;		
+	}
+	
 	static JSONObject decode(JSONObject code) {
 		JSONObject result = new JSONObject();
 

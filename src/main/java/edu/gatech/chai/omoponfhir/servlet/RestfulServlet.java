@@ -139,14 +139,22 @@ public class RestfulServlet extends RestfulServer {
 		plainProviders.add(systemTransactionProvider);
 		plainProviders.add(serverOperations);
 		
-		setPlainProviders(plainProviders);
-		
+//		setPlainProviders(plainProviders);
+		registerProviders(plainProviders);
 		/*
 		 * Set conformance provider
 		 */
+    	String authServerUrl = System.getenv("SMART_AUTHSERVERURL");
+    	String tokenServerUrl = System.getenv("SMART_TOKENSERVERURL");
+
 		SMARTonFHIRConformanceStatement capbilityProvider = new SMARTonFHIRConformanceStatement(this);
 		capbilityProvider.setPublisher("Georgia Tech - I3L");
-		capbilityProvider.setAuthServerUrl(getServletConfig().getInitParameter("authServerUrl"));
+		
+		if (authServerUrl != null && !authServerUrl.isEmpty())
+			capbilityProvider.setAuthServerUrl(authServerUrl);
+		if (tokenServerUrl != null && !tokenServerUrl.isEmpty())
+			capbilityProvider.setTokenServerUrl(tokenServerUrl);
+
 		setServerConformanceProvider(capbilityProvider);
 		
 		/*

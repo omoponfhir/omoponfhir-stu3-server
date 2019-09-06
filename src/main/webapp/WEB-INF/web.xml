@@ -86,12 +86,8 @@
 		<servlet-class>edu.gatech.chai.omoponfhir.servlet.RestfulServlet
 		</servlet-class>
 		<init-param>
-			<param-name>authServerUrl</param-name>
-			<param-value>http://docker.for.mac.localhost:8060</param-value>
-		</init-param>
-		<init-param>
 			<param-name>introspectUrl</param-name>
-			<param-value>http://docker.for.mac.localhost:8060/introspect</param-value>
+			<param-value>http://localhost:8080/introspect</param-value>
 		</init-param>
 		<init-param>
 			<param-name>authType</param-name>
