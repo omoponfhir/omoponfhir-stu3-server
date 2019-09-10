@@ -531,7 +531,8 @@ public class SmartAuthServicesController {
 
 //		// Alway pass this information so that JSP can route to correct endpoint
 //		model.addAttribute("base_url", baseUrl);
-
+		model.remove("base_url");
+		
 //		if (oauth2attr == null || !oauth2attr.has("client_id") || !oauth2attr.has("redirect_uri")) {
 //			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid request");
 //		}
@@ -832,15 +833,16 @@ public class SmartAuthServicesController {
 	}
 	
 	@GetMapping(value = "/app-launch")
-	public String appLaunch(
+	public ModelAndView appLaunch(
 			@RequestParam(name = "client_id", required = true) String appId,
 			@RequestParam(name = "patient_id", required = true) String patientId,
-			Model model
+			ModelMap model
 			) {
 		
 		// Alway pass this information so that JSP can route to correct endpoint
 //		model.addAttribute("base_url", baseUrl);
-
+		model.remove("base_url");
+		
 		SmartOnFhirAppEntry smartApp = smartOnFhirApp.getSmartOnFhirApp(appId);
 		
 		// Create launch context
@@ -854,8 +856,10 @@ public class SmartAuthServicesController {
 		if (iss == null || iss.isEmpty()) {
 			iss = "http://localhost:8080/fhir";
 		}
-
-		return "redirect:" + smartApp.getLaunchUri() + "?iss=" + iss + "&launch=" + launchContext;
+		
+		model.addAttribute("iss", iss);
+		model.addAttribute("launch", launchContext);
+		return new ModelAndView("redirect:" + smartApp.getLaunchUri(), model);
 	}
 
 //	@GetMapping(value = "/register")
