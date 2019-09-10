@@ -9,10 +9,6 @@ public class SmartOnFhirAppEntry {
 	private String redirectUri; 
 	private String launchUri; // App URL
 	private String scope;
-	private String authorizationCode;
-	private String accessToken;
-	private Date authCodeExpireDateTime;
-	private Date accessTokenExpireDateTime;
 	
 	public SmartOnFhirAppEntry() {}
 	
@@ -62,37 +58,5 @@ public class SmartOnFhirAppEntry {
 	
 	public void setScope(String scope) {
 		this.scope = scope;
-	}
-
-	public String getAuthorizationCode() {
-		return this.authorizationCode;
-	}
-	
-	public void setAuthorizationCode(String authorizationCode) {
-		this.authorizationCode = authorizationCode;
-	}
-
-	public String getAccessToken() {
-		return this.accessToken;
-	}
-	
-	public void setAccessToken(String accessToken) {
-		this.accessToken = accessToken;
-	}
-
-	public Date getAuthCodeExpireDateTime() {
-		return this.authCodeExpireDateTime;
-	}
-	
-	public void setAuthCodeExpireDateTime(Date authCodeExpireDateTime) {
-		this.authCodeExpireDateTime = authCodeExpireDateTime;
-	}
-
-	public Date getAccessTokenExpireDateTime() {
-		return this.accessTokenExpireDateTime;
-	}
-	
-	public void setAccessTokenExpireDateTime(Date accessTokenExpireDateTime) {
-		this.accessTokenExpireDateTime = accessTokenExpireDateTime;
 	}
 }

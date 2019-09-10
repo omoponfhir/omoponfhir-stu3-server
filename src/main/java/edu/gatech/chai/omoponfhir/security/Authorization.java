@@ -108,6 +108,10 @@ public class Authorization {
 	}
 
 	public String introspectToken(HttpServletRequest request) {
+		// reset values;
+		userId = null;
+		token_type = null;
+
 		OAuthAccessResourceRequest oauthRequest;
 		try {
 			oauthRequest = new OAuthAccessResourceRequest(request, ParameterStyle.HEADER);
@@ -180,9 +184,10 @@ public class Authorization {
 		}
 		
 		// Store the received information such as scope, user_id, client_id, etc...
-		userId = jsonObject.getString("sub");
-		clientId = jsonObject.getString("client_id");
-		token_type = jsonObject.getString("token_type");
+		if (jsonObject.has("sub"))
+			userId = jsonObject.getString("sub");
+		if (jsonObject.has("token_type"))
+			token_type = jsonObject.getString("token_type");
 
 		String[] scopeValues = jsonObject.getString("scope")
 				.trim().replaceAll("\\+", " ")
@@ -245,7 +250,7 @@ public class Authorization {
 				if ((scopeDetail[1].equalsIgnoreCase("*.read") || scopeDetail[1].equalsIgnoreCase("*.*"))) {
 					return true;
 				} else {
-					String[] scopeResource = scopeDetail[1].split(".");
+					String[] scopeResource = scopeDetail[1].split("\\.");
 					if (scopeResource[0].equalsIgnoreCase(resourceName) && 
 							(scopeResource[1].equalsIgnoreCase("read") || scopeResource[1].equalsIgnoreCase("*"))) {
 						return true;
@@ -256,7 +261,7 @@ public class Authorization {
 				if ((scopeDetail[1].equalsIgnoreCase("*.write") || scopeDetail[1].equalsIgnoreCase("*.*"))) {
 					return true;
 				} else {
-					String[] scopeResource = scopeDetail[1].split(".");
+					String[] scopeResource = scopeDetail[1].split("\\.");
 					if (scopeResource[0].equalsIgnoreCase(resourceName) && 
 							(scopeResource[1].equalsIgnoreCase("write") || scopeResource[1].equalsIgnoreCase("*"))) {
 						return true;

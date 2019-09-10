@@ -17,7 +17,7 @@ public class SmartOnFhirAppImpl extends BaseSmartOnFhir implements SmartOnFhirAp
 
 	@Override
 	public int save(SmartOnFhirAppEntry appEntry) {
-		String sql = "INSERT INTO SmartOnFhirApp (app_id, app_name, app_type, redirect_uri, launch_uri, scope, authorization_code, access_token, auth_code_expire, access_token_expire) values (?,?,?,?,?,?,?,?,?,?)";
+		String sql = "INSERT INTO SmartOnFhirApp (app_id, app_name, app_type, redirect_uri, launch_uri, scope) values (?,?,?,?,?,?)";
 
 		try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 			pstmt.setString(1, appEntry.getAppId());
@@ -26,10 +26,6 @@ public class SmartOnFhirAppImpl extends BaseSmartOnFhir implements SmartOnFhirAp
 			pstmt.setString(4, appEntry.getRedirectUri());
 			pstmt.setString(5, appEntry.getLaunchUri());
 			pstmt.setString(6, appEntry.getScope());
-			pstmt.setString(7, appEntry.getAuthorizationCode());
-			pstmt.setString(8, appEntry.getAccessToken());
-			pstmt.setDate(9, appEntry.getAuthCodeExpireDateTime());
-			pstmt.setDate(10, appEntry.getAccessTokenExpireDateTime());
 
 			pstmt.executeUpdate();
 
@@ -44,7 +40,7 @@ public class SmartOnFhirAppImpl extends BaseSmartOnFhir implements SmartOnFhirAp
 
 	@Override
 	public void update(SmartOnFhirAppEntry appEntry) {
-		String sql = "UPDATE SmartOnFhirApp SET app_name=?, app_type=?, redirect_uri=?, launch_uri=?, scope=?, authorization_code=?, access_token=?, auth_code_expire=?, access_token_expire=? where app_id=?";
+		String sql = "UPDATE SmartOnFhirApp SET app_name=?, app_type=?, redirect_uri=?, launch_uri=?, scope=? where app_id=?";
 
 		try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 			pstmt.setString(1, appEntry.getAppName());
@@ -52,11 +48,7 @@ public class SmartOnFhirAppImpl extends BaseSmartOnFhir implements SmartOnFhirAp
 			pstmt.setString(3, appEntry.getRedirectUri());
 			pstmt.setString(4, appEntry.getLaunchUri());
 			pstmt.setString(5, appEntry.getScope());
-			pstmt.setString(6, appEntry.getAuthorizationCode());
-			pstmt.setString(7, appEntry.getAccessToken());
-			pstmt.setDate(8, appEntry.getAuthCodeExpireDateTime());
-			pstmt.setDate(9, appEntry.getAccessTokenExpireDateTime());
-			pstmt.setString(10, appEntry.getAppId());
+			pstmt.setString(6, appEntry.getAppId());
 			pstmt.executeUpdate();
 			logger.info("App Entry Updated\n" + printAppInfo(appEntry));
 		} catch (SQLException e) {
@@ -85,10 +77,6 @@ public class SmartOnFhirAppImpl extends BaseSmartOnFhir implements SmartOnFhirAp
 		appEntry.setRedirectUri(rs.getString("redirect_uri"));
 		appEntry.setLaunchUri(rs.getString("launch_uri"));
 		appEntry.setScope(rs.getString("scope"));
-		appEntry.setAuthorizationCode(rs.getString("authorization_code"));
-		appEntry.setAccessToken(rs.getString("access_token"));
-		appEntry.setAuthCodeExpireDateTime(rs.getDate("auth_code_expire"));
-		appEntry.setAccessTokenExpireDateTime(rs.getDate("access_token_expire"));
 		
 		return appEntry;
 	}
@@ -136,15 +124,14 @@ public class SmartOnFhirAppImpl extends BaseSmartOnFhir implements SmartOnFhirAp
 		return appEntry;
 	}
 
-	public SmartOnFhirAppEntry getSmartOnFhirApp(String appId, String authCode, String redirectUri) {
+	public SmartOnFhirAppEntry getSmartOnFhirApp(String appId, String redirectUri) {
 		SmartOnFhirAppEntry appEntry = null;
 
-		String sql = "SELECT * FROM SmartOnFhirApp where app_id=? and authorization_code=? and redirect_uri=?";
+		String sql = "SELECT * FROM SmartOnFhirApp where app_id=? and redirect_uri=?";
 
 		try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 			pstmt.setString(1, appId);
-			pstmt.setString(2, authCode);
-			pstmt.setString(3, redirectUri);
+			pstmt.setString(2, redirectUri);
 			ResultSet rs = pstmt.executeQuery();
 
 			if (rs.next()) {
@@ -160,64 +147,64 @@ public class SmartOnFhirAppImpl extends BaseSmartOnFhir implements SmartOnFhirAp
 		return appEntry;
 	}
 
-	public SmartOnFhirAppEntry getSmartOnFhirAppByToken(String token) {
-		SmartOnFhirAppEntry appEntry = null;
+//	public SmartOnFhirAppEntry getSmartOnFhirAppByToken(String token) {
+//		SmartOnFhirAppEntry appEntry = null;
+//
+//		String sql = "SELECT * FROM SmartOnFhirApp where access_token=?";
+//
+//		try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+//			pstmt.setString(1, token);
+//			ResultSet rs = pstmt.executeQuery();
+//
+//			if (rs.next()) {
+//				appEntry = createAppEntry(rs);
+//				logger.info("App Entry Obtained\n" + printAppInfo(appEntry));
+//			} else {
+//				logger.info("No App Entry Exist with access_token = " + token);
+//			}
+//		} catch (SQLException e) {
+//			logger.error(e.getMessage());
+//		}
+//
+//		return appEntry;
+//	}
 
-		String sql = "SELECT * FROM SmartOnFhirApp where access_token=?";
-
-		try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-			pstmt.setString(1, token);
-			ResultSet rs = pstmt.executeQuery();
-
-			if (rs.next()) {
-				appEntry = createAppEntry(rs);
-				logger.info("App Entry Obtained\n" + printAppInfo(appEntry));
-			} else {
-				logger.info("No App Entry Exist with access_token = " + token);
-			}
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-		}
-
-		return appEntry;
-	}
-
-	public void putAcessCode(String appId, String accessToken) {
-		String sql = "UPDATE SmartOnFhirApp SET access_token=?, access_token_expire=? where app_id=?";
-
-		try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-			Calendar calendar = Calendar.getInstance();
-			calendar.add(Calendar.MINUTE, 5);
-			java.sql.Date expiresIn = new java.sql.Date(calendar.getTimeInMillis());
-			pstmt.setString(1, accessToken);
-			pstmt.setDate(2, expiresIn);
-			pstmt.setString(3, appId);
-			pstmt.executeUpdate();
-			
-			logger.info("AuthCode is updated\nAuth code:" + accessToken + "\nexpires in:" + expiresIn);
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-		}
-	}
+//	public void putAcessCode(String appId, String accessToken) {
+//		String sql = "UPDATE SmartOnFhirApp SET access_token=?, access_token_expire=? where app_id=?";
+//
+//		try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+//			Calendar calendar = Calendar.getInstance();
+//			calendar.add(Calendar.MINUTE, 5);
+//			java.sql.Date expiresIn = new java.sql.Date(calendar.getTimeInMillis());
+//			pstmt.setString(1, accessToken);
+//			pstmt.setDate(2, expiresIn);
+//			pstmt.setString(3, appId);
+//			pstmt.executeUpdate();
+//			
+//			logger.info("AuthCode is updated\nAuth code:" + accessToken + "\nexpires in:" + expiresIn);
+//		} catch (SQLException e) {
+//			logger.error(e.getMessage());
+//		}
+//	}
 	
-	public void putAuthorizationCode(String appId, String authCode) {
-		String sql = "UPDATE SmartOnFhirApp SET authorization_code=?, auth_code_expire=? where app_id=?";
-
-		try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-			Calendar calendar = Calendar.getInstance();
-			calendar.add(Calendar.MINUTE, 5);
-			java.sql.Date expiresIn = new java.sql.Date(calendar.getTimeInMillis());
-			pstmt.setString(1, authCode);
-			pstmt.setDate(2, expiresIn);
-			pstmt.setString(3, appId);
-			pstmt.executeUpdate();
-			
-			logger.info("AuthCode is updated\nAuth code:" + authCode + "\nexpires in:" + expiresIn);
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-		}
-	}
-	
+//	public void putAuthorizationCode(String appId, String authCode) {
+//		String sql = "UPDATE SmartOnFhirApp SET authorization_code=?, auth_code_expire=? where app_id=?";
+//
+//		try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+//			Calendar calendar = Calendar.getInstance();
+//			calendar.add(Calendar.MINUTE, 5);
+//			java.sql.Date expiresIn = new java.sql.Date(calendar.getTimeInMillis());
+//			pstmt.setString(1, authCode);
+//			pstmt.setDate(2, expiresIn);
+//			pstmt.setString(3, appId);
+//			pstmt.executeUpdate();
+//			
+//			logger.info("AuthCode is updated\nAuth code:" + authCode + "\nexpires in:" + expiresIn);
+//		} catch (SQLException e) {
+//			logger.error(e.getMessage());
+//		}
+//	}
+//	
 	public boolean exists(String appId) {
 		String sql = "SELECT * FROM SmartOnFhirApp where app_id=?";
 
@@ -238,11 +225,7 @@ public class SmartOnFhirAppImpl extends BaseSmartOnFhir implements SmartOnFhirAp
 				+ "app-type: " + appEntry.getAppType() + "\n"
 				+ "redirect-uri: " + appEntry.getRedirectUri() + "\n" 
 				+ "launch-uri: " + appEntry.getLaunchUri() + "\n"
-				+ "scope: " + appEntry.getScope() + "\n" 
-				+ "authorization-code: " + appEntry.getAuthorizationCode()
-				+ "\n" + "access-token: " + appEntry.getAccessToken() + "\n" 
-				+ "authorization-code-expiration: " + appEntry.getAuthCodeExpireDateTime() + "\n" 
-				+ "access-token-expiration: " + appEntry.getAuthCodeExpireDateTime() + "\n";
+				+ "scope: " + appEntry.getScope() + "\n";
 
 		return appInfo;
 	}

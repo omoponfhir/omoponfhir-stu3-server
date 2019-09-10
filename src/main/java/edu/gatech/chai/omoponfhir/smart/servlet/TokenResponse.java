@@ -1,5 +1,7 @@
 package edu.gatech.chai.omoponfhir.smart.servlet;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class TokenResponse {
 	private String access_token;
 	private String token_type = "Bearer";
@@ -17,42 +19,52 @@ public class TokenResponse {
 		this.scope = scope;
 	}
 
+	@JsonProperty("access_token")
 	public String getAccessToken() {
 		return this.access_token;
 	}
 
+	@JsonProperty("access_token")
 	public void setAccessToken(String accessToken) {
 		this.access_token = accessToken;
 	}
 
+	@JsonProperty("token_type")
 	public String getTokenType() {
 		return this.token_type;
 	}
 
+	@JsonProperty("token_type")
 	public void setTokenType(String tokenType) {
 		this.token_type = tokenType;
 	}
 
+	@JsonProperty("expires_in")
 	public Long getExpiresIn() {
 		return this.expires_in;
 	}
 
+	@JsonProperty("expires_in")
 	public void setExpiresIn(Long expiresIn) {
 		this.expires_in = expiresIn;
 	}
 
+	@JsonProperty("scope")
 	public String getScope() {
 		return this.scope;
 	}
 
+	@JsonProperty("scope")
 	public void setScope(String scope) {
 		this.scope = scope;
 	}
 	
+	@JsonProperty("patient")
 	public String getPatient() {
 		return this.patient;
 	}
 	
+	@JsonProperty("patient")
 	public void setPatient(String patient) {
 		this.patient = patient;
 	}

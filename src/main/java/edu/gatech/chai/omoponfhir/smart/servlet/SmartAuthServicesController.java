@@ -20,6 +20,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.SecureRandom;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -40,7 +41,6 @@ import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -51,8 +51,10 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
 
 import edu.gatech.chai.omoponfhir.smart.dao.SmartOnFhirAppImpl;
+import edu.gatech.chai.omoponfhir.smart.dao.SmartOnFhirSessionImpl;
 import edu.gatech.chai.omoponfhir.smart.model.SmartOnFhirAppEntry;
 import edu.gatech.chai.omoponfhir.smart.model.SmartOnFhirAppListContainer;
+import edu.gatech.chai.omoponfhir.smart.model.SmartOnFhirSessionEntry;
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
@@ -79,7 +81,12 @@ public class SmartAuthServicesController {
 	
 	@Autowired
 	protected SmartOnFhirAppImpl smartOnFhirApp;
-
+	
+	@Autowired
+	protected SmartOnFhirSessionImpl smartOnFhirSession;
+	
+	public static final int timeout_min = 5;
+	
 	public SmartAuthServicesController() {
 		super();
 
@@ -116,10 +123,10 @@ public class SmartAuthServicesController {
 		simEhr = false;
 	}
 
-	@ModelAttribute("oauth2attr")
-	public JSONObject oauth2attr() {
-		return new JSONObject();
-	}
+//	@ModelAttribute("oauth2attr")
+//	public JSONObject oauth2attr() {
+//		return new JSONObject();
+//	}
 
 	private JSONObject decodeJWT(String jwtToken) {
 		String[] jwtSplitted = jwtToken.split("\\.");
@@ -130,7 +137,7 @@ public class SmartAuthServicesController {
 		return new JSONObject(jwtBody);
 	}
 	
-	private String generateJWT(JSONObject paramMap) {
+	private String generateJWT(String launchContext, String scope, SmartOnFhirAppEntry smartApp) {
 		SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
 
 		long nowMillis = System.currentTimeMillis();
@@ -144,13 +151,20 @@ public class SmartAuthServicesController {
 		JSONObject context = new JSONObject();
 		context.put("need_patient_banner", !simEhr);
 		context.put("smart_style_url", smartStyleUrl);
-		if (paramMap.has("patient_id")) {
-			context.put("patient", paramMap.getString("patient_id"));
-		}
+		
+		String launchCode = new String(Base64.decodeBase64(launchContext));
+		logger.debug("Launch Code:" + launchCode);
 
+		// decode the code.
+		JSONObject codeJson = new JSONObject(launchCode);
+		JSONObject decodedCode = SmartLauncherCodec.decode(codeJson);
+		String patientId = decodedCode.getString("patient");
+		if (patientId != null && !patientId.isEmpty())
+			context.put("patient", patientId);
+		
 		payload.put("context", context);
-		payload.put("client_id", paramMap.getString("client_id"));
-		payload.put("scope", paramMap.getString("scope"));
+		payload.put("client_id", smartApp.getAppId());
+		payload.put("scope", scope);
 		payload.put("iat", now.getTime() / 1000);
 		payload.put("exp", expiration.getTime() / 1000);
 
@@ -164,14 +178,15 @@ public class SmartAuthServicesController {
 	}
 
 	@GetMapping(value = "/authorize")
-	public String authorize(@RequestParam(name = "launch", required = false) String launchContext,
+	public ModelAndView authorize(
+			@RequestParam(name = "launch", required = false) String launchContext,
 			@RequestParam(name = "response_type", required = false) String responseType,
 			@RequestParam(name = "client_id", required = false) String clientId,
 			@RequestParam(name = "redirect_uri", required = true) String redirectUri,
 			@RequestParam(name = "scope", required = false) String scope,
 			@RequestParam(name = "aud", required = false) String aud,
-			@RequestParam(name = "state", required = false) String state, Model model,
-			@ModelAttribute("oauth2attr") JSONObject oauth2attr) {
+			@RequestParam(name = "state", required = false) String state, 
+			ModelMap model) {
 
 		String errorDesc;
 		String error;
@@ -194,8 +209,10 @@ public class SmartAuthServicesController {
 				error = "unsupported_response_type";
 				errorDesc = encodeValue(
 						"The authorization server does not support obtaining an authorization code using this method");
-				return "redirect:" + redirectUri + "?error=" + error + "&error_description=" + errorDesc + "&sate="
-						+ state;
+				model.addAttribute("error", error);
+				model.addAttribute("error_description", errorDesc);
+				model.addAttribute("state", state);
+				return new ModelAndView("redirect:" + redirectUri, model);
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Error", e);
@@ -220,8 +237,10 @@ public class SmartAuthServicesController {
 			try {
 				error = "invalid_scope";
 				errorDesc = encodeValue("The requested scope is invalid, unknown, or malformed");
-				return "redirect:" + redirectUri + "?error=" + error + "&error_description=" + errorDesc + "&sate="
-						+ state;
+				model.addAttribute("error", error);
+				model.addAttribute("error_description", errorDesc);
+				model.addAttribute("state", state);
+				return new ModelAndView("redirect:" + redirectUri, model);
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Error", e);
@@ -233,8 +252,10 @@ public class SmartAuthServicesController {
 				error = "invalid_request";
 				errorDesc = encodeValue(
 						"The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed");
-				return "redirect:" + redirectUri + "?error=" + error + "&error_description=" + errorDesc + "&sate="
-						+ state;
+				model.addAttribute("error", error);
+				model.addAttribute("error_description", errorDesc);
+				model.addAttribute("state", state);
+				return new ModelAndView("redirect:" + redirectUri, model);
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Error", e);
@@ -251,8 +272,10 @@ public class SmartAuthServicesController {
 					logger.info("scope, "+scopeEntry+", is not valid");
 					error = "invalid_scope";
 					errorDesc = encodeValue("The requested scope is invalid, unknown, or malformed");
-					return "redirect:" + redirectUri + "?error=" + error + "&error_description=" + errorDesc + "&sate="
-					+ state;
+					model.addAttribute("error", error);
+					model.addAttribute("error_description", errorDesc);
+					model.addAttribute("state", state);
+					return new ModelAndView("redirect:" + redirectUri, model);
 				} catch (UnsupportedEncodingException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -261,22 +284,9 @@ public class SmartAuthServicesController {
 			}
 		}
 		
-		// redirect to authentication page.
-		model.addAttribute("auth_request_validated", true);
-
-		oauth2attr.put("launch", launchContext);
-		oauth2attr.put("response_type", responseType);
-		oauth2attr.put("client_id", clientId);
-		oauth2attr.put("redirect_uri", redirectUri);
-		oauth2attr.put("scope", scope);
-		oauth2attr.put("aud", aud);
-		oauth2attr.put("state", state);
-
 		// The launchContext, if exists, contains a context to resolve this to
-		// patient, encounter, provider, etc. We however do not have EHR that can
-		// store the information as this is initiated from smart-launcher.
-		// The context itself has those information encoded. Decode it now.
-		String patientId = null;
+		// patient, encounter, provider, etc. We used the encoding that smart on fhir 
+		// launcher is using.
 		if (launchContext != null && !launchContext.isEmpty()) {
 			String launchCode = new String(Base64.decodeBase64(launchContext));
 			logger.debug("Launch Code:" + launchCode);
@@ -298,18 +308,37 @@ public class SmartAuthServicesController {
 					// Return error as requested.
 					error = decodedCode.getString("auth_error");
 					errorDesc = SmartLauncherCodec.getSimErrorDesc(error);
-					return "redirect:" + redirectUri + "?error=" + error + "&error_description=" + errorDesc + "&state="
-							+ state;
+					model.addAttribute("error", error);
+					model.addAttribute("error_description", errorDesc);
+					model.addAttribute("state", state);
+					return new ModelAndView ("redirect:" + redirectUri, model);
 				}
 			}
-
-			patientId = decodedCode.getString("patient");
-			oauth2attr.put("patient_id", patientId);
+//
+//			patientId = decodedCode.getString("patient");
 		} else {
 			// TODO: Handle patient choose
 		}
 
-		return "authenticate";
+		// redirect to authentication page.
+		model.addAttribute("auth_request_validated", true);
+		model.addAttribute("launch", launchContext);
+		model.addAttribute("response_type", responseType);
+		model.addAttribute("client_id", clientId);
+		model.addAttribute("redirect_uri", redirectUri);
+		model.addAttribute("scope", scope);
+		model.addAttribute("aud", aud);
+		model.addAttribute("state", state);
+		
+//		SmartAuthRequest authRequest = new SmartAuthRequest();
+//		authRequest.setAppEntry(smartApp);
+//		authRequest.setLaunchContext(launchContext);
+//		authRequest.setState(state);
+//		authRequest.setScope(scope);
+//		authRequest.setServerBaseUrl(baseUrl);		
+//		return new ModelAndView("authenticate", "request", authRequest);
+
+		return new ModelAndView("authenticate", model);
 	}
 
 	private static final SecureRandom secureRandom = new SecureRandom(); // threadsafe
@@ -323,46 +352,54 @@ public class SmartAuthServicesController {
 
 	@RequestMapping(value = "/token", method=RequestMethod.POST, produces = "application/json")
 	@ResponseBody
-	public String token(
-//	public ResponseEntity<TokenResponse> token(
+//	public String token(
+	public ResponseEntity<TokenResponse> token(
 			@RequestParam(name = "grant_type", required = true) String grantType,
 			@RequestParam(name = "code", required = true) String code,
 			@RequestParam(name = "redirect_uri", required = true) String redirectUri,
 			@RequestParam(name = "client_id", required = true) String appId, Model model) {
 
-		// Alway pass this information so that JSP can route to correct endpoint
-		model.addAttribute("base_url", baseUrl);
+//		// Alway pass this information so that JSP can route to correct endpoint
+//		model.addAttribute("base_url", baseUrl);
 
-		logger.debug("Token Received:\ncode: "+code+"\nredirect_uri:"+redirectUri+"\nclient_id:"+appId+"\n");
-		SmartOnFhirAppEntry smartApp = smartOnFhirApp.getSmartOnFhirApp(appId, code, redirectUri);
+		logger.debug("Token Requested:\ncode: "+code+"\nredirect_uri:"+redirectUri+"\nclient_id:"+appId+"\n");
+		if (!"authorization_code".equals(grantType)) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Authorization Code");
+		}
+		
+		SmartOnFhirAppEntry smartApp = smartOnFhirApp.getSmartOnFhirApp(appId, redirectUri);
 		if (smartApp == null) {
 			// Invalid client-id. We shour send with bad request.
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Request");
 		}
 
-		if (!"authorization_code".equals(grantType)) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Authorization Code");
-		}
-		
 		Long now = (new Date()).getTime();
-		Long expire = smartApp.getAuthCodeExpireDateTime().getTime();
+		
+		SmartOnFhirSessionEntry smartSession = smartOnFhirSession.getSmartOnFhirSession(appId, code);
+		Long expire = smartSession.getAuthCodeExpirationDT().getTime();
 		if (expire <= now) {
 			// Expired. 400 respond with invalid_grant
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid_grant");
 		}
 		
 		// generate access_token
-		String accessToken = SmartAuthServicesController.generateNewToken();
-		smartOnFhirApp.putAcessCode(appId, accessToken);
+		boolean exists = true;
+		String accessToken = "";
+		while (exists) {
+			accessToken = SmartAuthServicesController.generateNewToken();
+			if (smartOnFhirSession.getSmartOnFhirAppByToken(accessToken) == null)
+				exists = false;
+		}
+		smartOnFhirSession.putAcessCode(appId, code, accessToken);
 
-		Long expiration = 300L;
+		Long expiration = (long) SmartAuthServicesController.timeout_min*60;
 		TokenResponse tokenResponse = new TokenResponse();
 		tokenResponse.setAccessToken(accessToken);
 		tokenResponse.setExpiresIn(expiration);
 		tokenResponse.setScope(smartApp.getScope());
 		tokenResponse.setTokenType("Bearer");
 		
-		JSONObject jwtBodyJson = decodeJWT(smartApp.getAuthorizationCode());
+		JSONObject jwtBodyJson = decodeJWT(smartSession.getAuthorizationCode());
 		if (jwtBodyJson.has("context")) {
 			JSONObject context = jwtBodyJson.getJSONObject("context");
 			if (context.has("patient")) {
@@ -372,8 +409,8 @@ public class SmartAuthServicesController {
 	
 		logger.debug("token: responding with "+tokenResponse.toString());
 
-//		return new ResponseEntity<TokenResponse> (tokenResponse, HttpStatus.OK);
-		return tokenResponse.toString();
+		return new ResponseEntity<TokenResponse> (tokenResponse, HttpStatus.OK);
+//		return tokenResponse.toString();
 	}
 
 	@PostMapping(value = "/introspect")
@@ -381,59 +418,91 @@ public class SmartAuthServicesController {
 			@RequestParam(name = "token", required = true) String token,
 			Model model) {
 		
-		// Alway pass this information so that JSP can route to correct endpoint
-		model.addAttribute("base_url", baseUrl);
-
-		SmartOnFhirAppEntry smartApp = smartOnFhirApp.getSmartOnFhirAppByToken(token);
-		if (smartApp == null) {
+		SmartOnFhirSessionEntry smartSession = smartOnFhirSession.getSmartOnFhirAppByToken(token);
+		if (smartSession == null) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Token");
 		}
 		
+		SmartOnFhirAppEntry smartApp = smartOnFhirApp.getSmartOnFhirApp(smartSession.getAppId());
+		if (smartApp == null) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Token");
+		}
+
 		Long now = (new Date()).getTime();
-		Long expire = smartApp.getAccessTokenExpireDateTime().getTime();
+		Long expire = smartSession.getAccessTokenExpirationDT().getTime();
 		if (expire <= now) {
 			// Expired. 400 respond with invalid_grant
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid_grant");
 		}
 
 		IntrospectResponse introspectResponse = new IntrospectResponse(true, smartApp.getScope());
-		introspectResponse.setExp(expire);
+		introspectResponse.setExp(expire/1000);
+		introspectResponse.setTokenType("Bearer");
 		
 		return new ResponseEntity<IntrospectResponse>(introspectResponse, HttpStatus.OK);
 	}
 	
-	@GetMapping(value = "/after-auth")
-	public ModelAndView afterAuth(ModelMap model, @ModelAttribute("oauth2attr") JSONObject oauth2attr) {
+	@PostMapping(value = "/after-auth")
+	public ModelAndView afterAuth(
+			@RequestParam(name = "launch", required = false) String launchContext,
+			@RequestParam(name = "response_type", required = false) String responseType,
+			@RequestParam(name = "client_id", required = false) String clientId,
+			@RequestParam(name = "redirect_uri", required = true) String redirectUri,
+			@RequestParam(name = "scope", required = false) String scope,
+			@RequestParam(name = "aud", required = false) String aud,
+			@RequestParam(name = "state", required = false) String state, 
+			ModelMap model) {
 		String error, errorDesc;
 
-		// Alway pass this information so that JSP can route to correct endpoint
-		model.addAttribute("base_url", baseUrl);
+//		// Alway pass this information so that JSP can route to correct endpoint
+//		model.addAttribute("base_url", baseUrl);
 
-		if (oauth2attr == null || !oauth2attr.has("client_id") || !oauth2attr.has("redirect_uri")) {
+//		if (oauth2attr == null || !oauth2attr.has("client_id") || !oauth2attr.has("redirect_uri")) {
+//			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid request");
+//		}
+
+		if (clientId == null || clientId.isEmpty() || redirectUri == null || redirectUri.isEmpty()) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid request");
 		}
-
-		String code = generateJWT(oauth2attr);
-		String state = oauth2attr.getString("state");
-		if (code != null && !code.isEmpty()) {
-			smartOnFhirApp.putAuthorizationCode(oauth2attr.getString("client_id"), code);
-//			return "redirect:" + oauth2attr.getString("redirect_uri") + "?code=" + code + "&state="
-//					+ state;
-			model.addAttribute("code", code);
-			model.addAttribute("state", state);
-			return new ModelAndView("redirect:" + oauth2attr.getString("redirect_uri"), model);
+		
+		SmartOnFhirAppEntry smartApp = smartOnFhirApp.getSmartOnFhirApp(clientId);
+		String code = generateJWT(launchContext, scope, smartApp);
+		if (code == null || code.isEmpty()) {
+			try {
+				error = "server_error";
+				errorDesc = encodeValue("Internal Server Error");
+				model.addAttribute("error", error);
+				model.addAttribute("error_description", errorDesc);
+				return new ModelAndView("redirect:" + smartApp.getRedirectUri(), model);
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Error", e);
+			}			
 		}
-
-		try {
-			error = "server_error";
-			errorDesc = encodeValue("Internal Server Error");
-			model.addAttribute("error", error);
-			model.addAttribute("error_description", errorDesc);
-			return new ModelAndView("redirect:" + oauth2attr.getString("redirect_uri"), model);
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Error", e);
+		
+		// Create a session for this authorization. 
+		SmartOnFhirSessionEntry sessionEntry = new SmartOnFhirSessionEntry();
+		String uuid = "";
+		boolean exists = true;
+		while (exists) {
+			uuid = UUID.randomUUID().toString();
+			exists = smartOnFhirSession.exists(uuid);
 		}
+		sessionEntry.setSessionId(uuid);
+		sessionEntry.setAuthorizationCode(code);
+		sessionEntry.setAppId(smartApp.getAppId());
+		sessionEntry.setState(state);
+		
+		Calendar calendar = Calendar.getInstance();
+		calendar.add(Calendar.MINUTE, SmartAuthServicesController.timeout_min);
+		java.sql.Date expiresIn = new java.sql.Date(calendar.getTimeInMillis());
+		sessionEntry.setAuthCodeExpirationDT(expiresIn);
+
+		smartOnFhirSession.save(sessionEntry);
+
+		model.addAttribute("code", code);
+		model.addAttribute("state", state);
+		return new ModelAndView("redirect:" + smartApp.getRedirectUri(), model);
 	}
 
 	@GetMapping(value = "/app-create")
