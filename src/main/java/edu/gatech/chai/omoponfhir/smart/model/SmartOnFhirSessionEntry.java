@@ -10,6 +10,7 @@ public class SmartOnFhirSessionEntry {
 	private String accessToken;
 	private Date authCodeExpirationDT;
 	private Date accessTokenExpirationDT;
+	private String refreshToken;
 
 	public String getSessionId() {
 		return this.sessionId;
@@ -65,5 +66,13 @@ public class SmartOnFhirSessionEntry {
 	
 	public void setAccessTokenExpirationDT(Date accessTokenExpirationDT) {
 		this.accessTokenExpirationDT = accessTokenExpirationDT;
+	}
+	
+	public String getRefreshToken() {
+		return this.refreshToken;
+	}
+	
+	public void setRefreshToken(String refreshToken) {
+		this.refreshToken = refreshToken;
 	}
 }

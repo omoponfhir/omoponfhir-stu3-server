@@ -8,6 +8,7 @@ public class TokenResponse {
 	private Long expires_in;
 	private String scope;
 	private String patient;
+	private String refresh_token;
 
 	public TokenResponse() {
 	}
@@ -27,6 +28,16 @@ public class TokenResponse {
 	@JsonProperty("access_token")
 	public void setAccessToken(String accessToken) {
 		this.access_token = accessToken;
+	}
+
+	@JsonProperty("refresh_token")
+	public String getRefreshToken() {
+		return this.refresh_token;
+	}
+
+	@JsonProperty("refresh_token")
+	public void setRefreshToken(String refreshToken) {
+		this.refresh_token = refreshToken;
 	}
 
 	@JsonProperty("token_type")
@@ -75,7 +86,8 @@ public class TokenResponse {
 				+ "\"token_type\": \"" + token_type + "\", "
 				+ "\"expires_in\": " + expires_in + ", "
 				+ "\"scope\": \"" + scope + "\", "
-				+ "\"patient\": \"" + patient + "\"" 
+				+ "\"patient\": \"" + patient + "\", " 
+				+ "\"refresh_token\": \"" + refresh_token + "\""
 				+ "}";
 	}
 }

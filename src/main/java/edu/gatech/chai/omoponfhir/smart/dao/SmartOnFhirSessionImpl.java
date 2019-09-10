@@ -18,7 +18,7 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 
 	@Override
 	public int save(SmartOnFhirSessionEntry sessionEntry) {
-		String sql = "INSERT INTO SmartOnFhirSession (session_id, state, app_id, authorization_code, access_token, auth_code_expiration_dt, access_token_expiration_dt) values (?,?,?,?,?,?,?)";
+		String sql = "INSERT INTO SmartOnFhirSession (session_id, state, app_id, authorization_code, access_token, auth_code_expiration_dt, access_token_expiration_dt, refresh_token) values (?,?,?,?,?,?,?,?)";
 
 		try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 			pstmt.setString(1, sessionEntry.getSessionId());
@@ -28,6 +28,7 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 			pstmt.setString(5, sessionEntry.getAccessToken());
 			pstmt.setDate(6, sessionEntry.getAuthCodeExpirationDT());
 			pstmt.setDate(7, sessionEntry.getAccessTokenExpirationDT());
+			pstmt.setString(8,  sessionEntry.getRefreshToken());
 
 			pstmt.executeUpdate();
 
@@ -42,7 +43,7 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 
 	@Override
 	public void update(SmartOnFhirSessionEntry sessionEntry) {
-		String sql = "UPDATE SmartOnFhirSession SET state=?, app_id=?, authorization_code=?, access_token=?, auth_code_expiration_dt=?, access_token_expiration_dt=? where session_id=?";
+		String sql = "UPDATE SmartOnFhirSession SET state=?, app_id=?, authorization_code=?, access_token=?, auth_code_expiration_dt=?, access_token_expiration_dt=?, refresh_token=? where session_id=?";
 
 		try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 			pstmt.setString(1, sessionEntry.getState());
@@ -51,7 +52,8 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 			pstmt.setString(4, sessionEntry.getAccessToken());
 			pstmt.setDate(5, sessionEntry.getAuthCodeExpirationDT());
 			pstmt.setDate(6, sessionEntry.getAccessTokenExpirationDT());
-			pstmt.setString(7, sessionEntry.getSessionId());
+			pstmt.setString(7, sessionEntry.getRefreshToken());
+			pstmt.setString(8, sessionEntry.getSessionId());
 			pstmt.executeUpdate();
 			logger.info("Session Entry Updated\n" + printSessionInfo(sessionEntry));
 		} catch (SQLException e) {
@@ -81,6 +83,7 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 		appEntry.setAccessToken(rs.getString("access_token"));
 		appEntry.setAuthCodeExpirationDT(rs.getDate("auth_code_expiration_dt"));
 		appEntry.setAccessTokenExpirationDT(rs.getDate("access_token_expiration_dt"));
+		appEntry.setRefreshToken(rs.getString("refresh_token"));
 		
 		return appEntry;
 	}
@@ -150,6 +153,25 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 		return appSession;
 	}
 	
+	public List<SmartOnFhirSessionEntry> getSmartOnFhirSessionsByAppId(String appId) {
+		List<SmartOnFhirSessionEntry> appSessions = new ArrayList<SmartOnFhirSessionEntry>();
+
+		String sql = "SELECT * FROM SmartOnFhirSession where app_id=?";
+
+		try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+			pstmt.setString(1, appId);
+			ResultSet rs = pstmt.executeQuery();
+
+			while (rs.next()) {
+				appSessions.add(createSessionEntry(rs));
+			}
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+		}
+
+		return appSessions;
+	}
+	
 	public SmartOnFhirSessionEntry getSmartOnFhirAppByToken(String token) {
 		SmartOnFhirSessionEntry sessionEntry = null;
 
@@ -172,7 +194,29 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 		return sessionEntry;
 	}
 
-	public void putAcessCode(String appId, String authCode, String accessToken) {
+	public SmartOnFhirSessionEntry getSmartOnFhirAppByRefreshToken(String token) {
+		SmartOnFhirSessionEntry sessionEntry = null;
+
+		String sql = "SELECT * FROM SmartOnFhirSession where refresh_token=?";
+
+		try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+			pstmt.setString(1, token);
+			ResultSet rs = pstmt.executeQuery();
+
+			if (rs.next()) {
+				sessionEntry = createSessionEntry(rs);
+				logger.info("Session" + printSessionInfo(sessionEntry));
+			} else {
+				logger.info("No App Entry Exist with refresh token = " + token);
+			}
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+		}
+
+		return sessionEntry;
+	}
+
+	public void putAccessCode(String appId, String authCode, String accessToken) {
 		String sql = "UPDATE SmartOnFhirSession SET access_token=?, access_token_expiration_dt=? where app_id=? and authorization_code=?";
 
 		try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -185,7 +229,22 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 			pstmt.setString(4, authCode);
 			pstmt.executeUpdate();
 			
-			logger.info("AuthCode is updated\nAuth code:" + accessToken + "\nexpires in:" + expiresIn);
+			logger.info("Access Token is updated\nAccess Token:" + accessToken + "\nexpires in:" + expiresIn);
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+		}
+	}
+
+	public void putRefereshCode(String appId, String authCode, String refreshToken) {
+		String sql = "UPDATE SmartOnFhirSession SET refresh_token=? where app_id=? and authorization_code=?";
+
+		try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+			pstmt.setString(1, refreshToken);
+			pstmt.setString(2, appId);
+			pstmt.setString(3, authCode);
+			pstmt.executeUpdate();
+			
+			logger.info("Refresh Token is updated\nRefresh Token:" + refreshToken);
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 		}
@@ -210,7 +269,8 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 				+ "app-id: " + sessionEntry.getAppId() + "\n" + "authorization-code: "
 				+ sessionEntry.getAuthorizationCode() + "\n" + "access-token: " + sessionEntry.getAccessToken() + "\n"
 				+ "authorization-code-expiration_datatime: " + sessionEntry.getAuthCodeExpirationDT() + "\n"
-				+ "access-token-expiration_datatime: " + sessionEntry.getAccessTokenExpirationDT() + "\n";
+				+ "access-token-expiration_datatime: " + sessionEntry.getAccessTokenExpirationDT() + "\n"
+				+ "refresh-token: " + sessionEntry.getRefreshToken() + "\n";
 
 		return appInfo;
 	}
