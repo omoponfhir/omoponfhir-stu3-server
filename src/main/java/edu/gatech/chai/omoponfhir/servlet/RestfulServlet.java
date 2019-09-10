@@ -58,18 +58,17 @@ public class RestfulServlet extends RestfulServer {
 	public void initialize() {
 		// Set server name
 		setServerName("GT-FHIR2 for OMOPv5");
-		
-		
+
 		// If we have system environment variable to hardcode the base URL, do it now.
 		String serverBaseUrl = System.getenv("SERVERBASE_URL");
 		if (serverBaseUrl != null && !serverBaseUrl.isEmpty() && !serverBaseUrl.trim().equalsIgnoreCase("")) {
 			serverBaseUrl = serverBaseUrl.trim();
 			if (!serverBaseUrl.startsWith("http://") && !serverBaseUrl.startsWith("https://")) {
-				serverBaseUrl = "https://"+serverBaseUrl;
+				serverBaseUrl = "https://" + serverBaseUrl;
 			}
-			
+
 			if (serverBaseUrl.endsWith("/")) {
-				serverBaseUrl = serverBaseUrl.substring(0, serverBaseUrl.length()-1);
+				serverBaseUrl = serverBaseUrl.substring(0, serverBaseUrl.length() - 1);
 			}
 
 			IServerAddressStrategy serverAddressStrategy = new HardcodedServerAddressStrategy(serverBaseUrl);
@@ -84,53 +83,53 @@ public class RestfulServlet extends RestfulServer {
 		ServerOperations serverOperations = new ServerOperations();
 
 		/*
-		 * Define resource providers 
+		 * Define resource providers
 		 */
 		List<IResourceProvider> providers = new ArrayList<IResourceProvider>();
 
 		ConditionResourceProvider conditionResourceProvider = new ConditionResourceProvider();
 		providers.add(conditionResourceProvider);
-		
-		EncounterResourceProvider encounterResourceProvider = new EncounterResourceProvider(); 
+
+		EncounterResourceProvider encounterResourceProvider = new EncounterResourceProvider();
 		providers.add(encounterResourceProvider);
-		
-		MedicationResourceProvider medicationResourceProvider = new MedicationResourceProvider(); 
+
+		MedicationResourceProvider medicationResourceProvider = new MedicationResourceProvider();
 		providers.add(medicationResourceProvider);
-		
+
 		MedicationStatementResourceProvider medicationStatementResourceProvider = new MedicationStatementResourceProvider();
 		providers.add(medicationStatementResourceProvider);
-		
+
 		MedicationRequestResourceProvider medicationRequestResourceProvider = new MedicationRequestResourceProvider();
 		providers.add(medicationRequestResourceProvider);
-		
+
 		ObservationResourceProvider observationResourceProvider = new ObservationResourceProvider();
 		providers.add(observationResourceProvider);
-		
+
 		OrganizationResourceProvider organizationResourceProvider = new OrganizationResourceProvider();
 		providers.add(organizationResourceProvider);
-		
+
 		PractitionerResourceProvider practitionerResourceProvider = new PractitionerResourceProvider();
 		providers.add(practitionerResourceProvider);
-		
+
 		PatientResourceProvider patientResourceProvider = new PatientResourceProvider();
 		providers.add(patientResourceProvider);
-		
+
 		ProcedureResourceProvider procedureResourceProvider = new ProcedureResourceProvider();
 		providers.add(procedureResourceProvider);
-		
+
 		DeviceResourceProvider deviceResourceProvider = new DeviceResourceProvider();
 		providers.add(deviceResourceProvider);
 
 		DeviceUseStatementResourceProvider deviceUseStatementResourceProvider = new DeviceUseStatementResourceProvider();
 		providers.add(deviceUseStatementResourceProvider);
-		
+
 		DocumentReferenceResourceProvider documentReferenceResourceProvider = new DocumentReferenceResourceProvider();
-		providers.add(documentReferenceResourceProvider);		
+		providers.add(documentReferenceResourceProvider);
 
 		ConceptMapResourceProvider conceptMapResourceProvider = new ConceptMapResourceProvider();
 		conceptMapResourceProvider.setFhirContext(getFhirContext());
 		providers.add(conceptMapResourceProvider);
-		
+
 		setResourceProviders(providers);
 
 		/*
@@ -138,25 +137,25 @@ public class RestfulServlet extends RestfulServer {
 		 */
 		plainProviders.add(systemTransactionProvider);
 		plainProviders.add(serverOperations);
-		
+
 //		setPlainProviders(plainProviders);
 		registerProviders(plainProviders);
 		/*
 		 * Set conformance provider
 		 */
-    	String authServerUrl = System.getenv("SMART_AUTHSERVERURL");
-    	String tokenServerUrl = System.getenv("SMART_TOKENSERVERURL");
+		String authServerUrl = System.getenv("SMART_AUTHSERVERURL");
+		String tokenServerUrl = System.getenv("SMART_TOKENSERVERURL");
 
 		SMARTonFHIRConformanceStatement capbilityProvider = new SMARTonFHIRConformanceStatement(this);
 		capbilityProvider.setPublisher("Georgia Tech - I3L");
-		
+
 		if (authServerUrl != null && !authServerUrl.isEmpty())
 			capbilityProvider.setAuthServerUrl(authServerUrl);
 		if (tokenServerUrl != null && !tokenServerUrl.isEmpty())
 			capbilityProvider.setTokenServerUrl(tokenServerUrl);
 
 		setServerConformanceProvider(capbilityProvider);
-		
+
 		/*
 		 * Add page provider. Use memory based on for now.
 		 */
@@ -166,9 +165,9 @@ public class RestfulServlet extends RestfulServer {
 		setPagingProvider(pp);
 
 		/*
-		 * Use a narrative generator. This is a completely optional step, but
-		 * can be useful as it causes HAPI to generate narratives for resources
-		 * which don't otherwise have one.
+		 * Use a narrative generator. This is a completely optional step, but can be
+		 * useful as it causes HAPI to generate narratives for resources which don't
+		 * otherwise have one.
 		 */
 		INarrativeGenerator narrativeGen = new DefaultThymeleafNarrativeGenerator();
 		getFhirContext().setNarrativeGenerator(narrativeGen);
@@ -177,47 +176,53 @@ public class RestfulServlet extends RestfulServer {
 		 * Enable CORS
 		 */
 		CorsConfiguration config = new CorsConfiguration();
-		CorsInterceptor corsInterceptor = new CorsInterceptor(config);
+		config.addAllowedHeader("x-fhir-starter");
+		config.addAllowedHeader("Origin");
 		config.addAllowedHeader("Accept");
+		config.addAllowedHeader("X-Requested-With");
 		config.addAllowedHeader("Content-Type");
+		config.addAllowedHeader("Authorization");
+
 		config.addAllowedOrigin("*");
+		
 		config.addExposedHeader("Location");
 		config.addExposedHeader("Content-Location");
-		config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+		config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+
+		CorsInterceptor corsInterceptor = new CorsInterceptor(config);
 		registerInterceptor(corsInterceptor);
 
 		/*
-		 * This server interceptor causes the server to return nicely formatter
-		 * and coloured responses instead of plain JSON/XML if the request is
-		 * coming from a browser window. It is optional, but can be nice for
-		 * testing.
+		 * This server interceptor causes the server to return nicely formatter and
+		 * coloured responses instead of plain JSON/XML if the request is coming from a
+		 * browser window. It is optional, but can be nice for testing.
 		 */
 		registerInterceptor(new ResponseHighlighterInterceptor());
 
 		/*
 		 * OpenID check interceptor to support SMART on FHIR
 		 */
-		
-    	String url = System.getenv("SMART_INTROSPECTURL");
-    	String authType = System.getenv("AUTH_TYPE");
-    	String client_id = System.getenv("SMART_CLIENTID");
-    	String client_secret = System.getenv("SMART_CLIENTSECRET");
-    	String read_only = System.getenv("FHIR_READONLY");
+
+		String url = System.getenv("SMART_INTROSPECTURL");
+		String authType = System.getenv("AUTH_TYPE");
+		String client_id = System.getenv("SMART_CLIENTID");
+		String client_secret = System.getenv("SMART_CLIENTSECRET");
+		String read_only = System.getenv("FHIR_READONLY");
 //    	String local_bypass = System.getenv("LOCAL_BYPASS");
 
-    	if (url == null) 
-    		url = getServletConfig().getInitParameter("introspectUrl");
-    	if (authType == null)
-    		authType = getServletConfig().getInitParameter("authType");
-    	if (client_id == null) 
-    		client_id = getServletConfig().getInitParameter("clientId");
-    	if (client_secret == null)
-    		client_secret = getServletConfig().getInitParameter("clientSecret");
+		if (url == null)
+			url = getServletConfig().getInitParameter("introspectUrl");
+		if (authType == null)
+			authType = getServletConfig().getInitParameter("authType");
+		if (client_id == null)
+			client_id = getServletConfig().getInitParameter("clientId");
+		if (client_secret == null)
+			client_secret = getServletConfig().getInitParameter("clientSecret");
 //    	if (local_bypass == null) 
 //    		local_bypass = getServletConfig().getInitParameter("localByPass");
-    	if (read_only == null) 
-    		read_only = getServletConfig().getInitParameter("readOnly");
-    	
+		if (read_only == null)
+			read_only = getServletConfig().getInitParameter("readOnly");
+
 		OIDCInterceptor oIDCInterceptor = new OIDCInterceptor();
 		oIDCInterceptor.setIntrospectUrl(url);
 		oIDCInterceptor.setAuthType(authType);
@@ -225,9 +230,9 @@ public class RestfulServlet extends RestfulServer {
 		oIDCInterceptor.setClientSecret(client_secret);
 //		oIDCInterceptor.setLocalByPass(local_bypass);
 		oIDCInterceptor.setReadOnly(read_only);
-		
+
 		registerInterceptor(oIDCInterceptor);
-		
+
 		/*
 		 * Tells the server to return pretty-printed responses by default
 		 */
@@ -237,7 +242,7 @@ public class RestfulServlet extends RestfulServer {
 		 * Set response encoding.
 		 */
 		setDefaultResponseEncoding(EncodingEnum.JSON);
-		
+
 	}
 
 }

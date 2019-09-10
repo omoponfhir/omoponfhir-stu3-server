@@ -839,7 +839,7 @@ public class SmartAuthServicesController {
 			) {
 		
 		// Alway pass this information so that JSP can route to correct endpoint
-		model.addAttribute("base_url", baseUrl);
+//		model.addAttribute("base_url", baseUrl);
 
 		SmartOnFhirAppEntry smartApp = smartOnFhirApp.getSmartOnFhirApp(appId);
 		
