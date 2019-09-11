@@ -540,7 +540,7 @@ public class SmartAuthServicesController {
 		// Check if an authorization already exists for this session.
 		// Get all the sessions for this client and see if any session has a same
 		// patient id. We already checked scope in authorize().
-		boolean createNewSession = false;
+		boolean createNewSession = true;
 		SmartOnFhirSessionEntry sessionEntry = null;
 		List<SmartOnFhirSessionEntry> smartSessions = smartOnFhirSession.getSmartOnFhirSessionsByAppId(clientId);
 		for (SmartOnFhirSessionEntry entry : smartSessions) {
@@ -551,7 +551,7 @@ public class SmartAuthServicesController {
 						&& !patientInContext.isEmpty()) {
 					if (patientInCode.equals(patientInContext)) {
 						sessionEntry = entry;
-						createNewSession = true;
+						createNewSession = false;
 						logger.debug("There is an existing session for this patient, " + patientInCode
 								+ ", with client-id: " + clientId);
 						break;
