@@ -271,6 +271,7 @@ public class Authorization {
 		}
 		
 		System.out.println(resourceName+" "+resourceOperationType.name()+" request failed to get Authorization.");
+		logger.error("Request ("+theRequestDetails.getCompleteUrl()+") is not authorized:"+resourceName+" "+resourceOperationType.name()+" request failed to get Authorization.");
 		return false;
 	}
 	
