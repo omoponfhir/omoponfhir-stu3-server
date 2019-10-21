@@ -243,8 +243,8 @@ public class Authorization {
 				if (page_id != null && !page_id.isEmpty()) {
 					// This is page loading. Then, it means the original request passed.
 					// If this is wrong page_id, then the server will not able to locate that.
-					System.out.println("Page loading: "+page_id+". We are assuming this has already authorized.");
-					logger.info("Request ("+theRequestDetails.getCompleteUrl()+") is page request with id="+page_id+" We are assuming this has already authorized.");
+					System.out.println("[THIS SHOULD NOT HAPPEND] Page loading: "+page_id+". We are assuming this has already authorized.");
+					logger.info("[THIS SHOULD NOT HAPPEND] Request ("+theRequestDetails.getCompleteUrl()+") is page request with id="+page_id+" We are assuming this has already authorized.");
 
 					return true;
 				}

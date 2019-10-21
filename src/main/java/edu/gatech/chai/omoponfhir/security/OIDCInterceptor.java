@@ -28,6 +28,7 @@ import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import ca.uhn.fhir.rest.server.exceptions.MethodNotAllowedException;
 import ca.uhn.fhir.rest.server.interceptor.InterceptorAdapter;
+import ca.uhn.fhir.rest.server.interceptor.IServerInterceptor.ActionRequestDetails;
 
 /**
  * @author MC142
@@ -39,14 +40,16 @@ public class OIDCInterceptor extends InterceptorAdapter {
 	private static final org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger(OIDCInterceptor.class);
 
 	private String authType;
-	private String introspectUrl;	
+	private String introspectUrl;
 	private String clientId;
 	private String clientSecret;
 //	private String localByPass;
 	private String readOnly;
 
+	private static String authKeyName = "smartOnFhirAuth";
+
 	public OIDCInterceptor() {
-		authType = "None";  // Default allows anonymous access
+		authType = "None"; // Default allows anonymous access
 		introspectUrl = "http://localhost:8080/introspect";
 	}
 
@@ -55,33 +58,33 @@ public class OIDCInterceptor extends InterceptorAdapter {
 			HttpServletResponse theResponse) throws AuthenticationException {
 
 		ourLog.debug("[OAuth] Request from " + theRequest.getRemoteAddr());
-		
+
 		// check environment variables now as they may have been updated.
 		String readOnlyEnv = System.getenv("FHIR_READONLY");
 		if (readOnlyEnv != null && !readOnlyEnv.isEmpty()) {
 			setReadOnly(readOnlyEnv);
 		}
-		
+
 		String authTypeEnv = System.getenv("AUTH_TYPE");
 		if (authTypeEnv != null && !authTypeEnv.isEmpty()) {
 			setAuthType(authTypeEnv);
 		} else {
 			setAuthType("None");
 		}
-		
+
 //		String localByPassEnv = System.getenv("LOCAL_BYPASS");
 //		if (localByPassEnv != null && !localByPassEnv.isEmpty()) {
 //			setLocalByPass(localByPassEnv);
 //		}
-		
+
 		if (readOnly.equalsIgnoreCase("True")) {
 			if (!theRequest.getMethod().equalsIgnoreCase("GET")) {
-				RequestTypeEnum[] allowedMethod = new RequestTypeEnum[] {RequestTypeEnum.GET};
+				RequestTypeEnum[] allowedMethod = new RequestTypeEnum[] { RequestTypeEnum.GET };
 				throw new MethodNotAllowedException("Server Running in Read Only", allowedMethod);
 //				return false;
 			}
 		}
-		
+
 		if (theRequestDetails.getRestOperationType() == RestOperationTypeEnum.METADATA) {
 			ourLog.debug("This is METADATA request.");
 
@@ -145,12 +148,12 @@ public class OIDCInterceptor extends InterceptorAdapter {
 		if (authType.equalsIgnoreCase("None")) {
 			ourLog.debug("[OAuth] OAuth is disabled. Request from " + theRequest.getRemoteAddr() + "is approved");
 			return true;
-		} 
-		
+		}
+
 		if (authType.startsWith("Basic ")) {
 			String[] basicCredential = authType.substring(6).split(":");
 			if (basicCredential.length != 2) {
-				
+
 				AuthenticationException ex = new AuthenticationException("Basic Authorization Setup Incorrectly");
 				ex.addAuthenticateHeaderForRealm("OmopOnFhir");
 				throw ex;
@@ -164,7 +167,7 @@ public class OIDCInterceptor extends InterceptorAdapter {
 				ex.addAuthenticateHeaderForRealm("OmopOnFhir");
 				throw ex;
 			}
-			
+
 			// Check if basic auth.
 			String prefix = authHeader.substring(0, 6);
 			if (!"basic ".equalsIgnoreCase(prefix)) {
@@ -172,17 +175,17 @@ public class OIDCInterceptor extends InterceptorAdapter {
 				ex.addAuthenticateHeaderForRealm("OmopOnFhir");
 				throw ex;
 			}
-			
+
 			String base64 = authHeader.substring(6);
 
 			String base64decoded = new String(Base64.decodeBase64(base64));
 			String[] parts = base64decoded.split(":");
 
 			if (username.equals(parts[0]) && password.equals(parts[1])) {
-				ourLog.debug("[Basic Auth] Auth is granted with " + username + " and "+ password);
+				ourLog.debug("[Basic Auth] Auth is granted with " + username + " and " + password);
 				return true;
 			}
-			
+
 			AuthenticationException ex = new AuthenticationException("Incorrect Username and Password");
 			ex.addAuthenticateHeaderForRealm("OmopOnFhir");
 			throw ex;
@@ -192,20 +195,25 @@ public class OIDCInterceptor extends InterceptorAdapter {
 					+ getClientSecret());
 			Authorization myAuth = new Authorization(getIntrospectUrl(), getClientId(), getClientSecret());
 
-			String err_msg = myAuth.introspectToken(theRequest);
-			if (err_msg.isEmpty() == false) {
-				throw new AuthenticationException(err_msg);
-			}
-
 			// Now we have a valid access token. Now, check Token type
 			if (myAuth.checkBearer() == false) {
 				throw new AuthenticationException("Not Token Bearer");
 			}
 
+			String err_msg = myAuth.introspectToken(theRequest);
+			if (err_msg.isEmpty() == false) {
+				throw new AuthenticationException(err_msg);
+			}
+
 			// Check scope.
-			return myAuth.allowRequest(theRequestDetails);				
+			// Fine grain checking should be done after request is parsed. Save
+			// this auth to smartOnFhir attribute.
+			theRequestDetails.setAttribute(OIDCInterceptor.authKeyName, myAuth);
+
+			return true;
+//			return myAuth.allowRequest(theRequestDetails);				
 		}
-		
+
 		// for test.
 		// String resourceName = theRequestDetails.getResourceName();
 		// String resourceOperationType =
@@ -215,14 +223,28 @@ public class OIDCInterceptor extends InterceptorAdapter {
 
 	}
 
+	@Override
+	public void incomingRequestPreHandled(RestOperationTypeEnum theOperation,
+			ActionRequestDetails theProcessedRequest) {
+		RequestDetails requestDetails = theProcessedRequest.getRequestDetails();
+
+		Authorization myAuth = (Authorization) requestDetails.getAttribute(OIDCInterceptor.authKeyName);
+		if (myAuth != null) {
+			if (myAuth.allowRequest(requestDetails) == false) {
+				// Something happened while checking fine grain auth. Throw exception.
+				throw new AuthenticationException("Resourcee level scope and operation checking failed");
+			}
+		}
+	}
+
 	public String getAuthType() {
 		return authType;
 	}
-	
+
 	public void setAuthType(String authType) {
 		this.authType = authType;
 	}
-	
+
 	public String getIntrospectUrl() {
 		return introspectUrl;
 	}
@@ -258,7 +280,7 @@ public class OIDCInterceptor extends InterceptorAdapter {
 	public String getReadOnly() {
 		return readOnly;
 	}
-	
+
 	public void setReadOnly(String readOnly) {
 		this.readOnly = readOnly;
 	}
