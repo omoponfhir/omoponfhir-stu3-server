@@ -491,19 +491,19 @@ public class SmartAuthServicesController {
 
 		SmartOnFhirSessionEntry smartSession = smartOnFhirSession.getSmartOnFhirAppByToken(token);
 		if (smartSession == null) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Token");
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid_client");
 		}
 
 		SmartOnFhirAppEntry smartApp = smartOnFhirApp.getSmartOnFhirApp(smartSession.getAppId());
 		if (smartApp == null) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Token");
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid_client");
 		}
 
 		Long now = (new Date()).getTime();
 		Long expire = smartSession.getAccessTokenExpirationDT().getTime();
 		if (expire <= now) {
-			// Expired. 400 respond with invalid_grant
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid_grant");
+			// Expired. 401 respond with invalid_grant
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid_grant");
 		}
 
 		IntrospectResponse introspectResponse = new IntrospectResponse(true, smartApp.getScope());

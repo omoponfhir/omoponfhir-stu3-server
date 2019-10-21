@@ -20,6 +20,7 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -234,6 +235,22 @@ public class Authorization {
 		// all patients permission.  We need to revisit this.
 		// 
 		String resourceName = theRequestDetails.getResourceName();
+		if (resourceName == null) {
+			Map<String, String[]> params = theRequestDetails.getParameters();
+			String[] page_ = params.get("_getpages");
+			if (page_.length > 0) {
+				String page_id = page_[0];
+				if (page_id != null && !page_id.isEmpty()) {
+					// This is page loading. Then, it means the original request passed.
+					// If this is wrong page_id, then the server will not able to locate that.
+					System.out.println("Page loading: "+page_id+". We are assuming this has already authorized.");
+					logger.info("Request ("+theRequestDetails.getCompleteUrl()+") is page request with id="+page_id+" We are assuming this has already authorized.");
+
+					return true;
+				}
+			}
+		}
+		
 		RestOperationTypeEnum resourceOperationType = theRequestDetails.getRestOperationType();
 		for (String scope : scopeSet) {
 			// If the scope is not form of <patient or user>/<resource>.<access>, (eg) patient/*.read,
