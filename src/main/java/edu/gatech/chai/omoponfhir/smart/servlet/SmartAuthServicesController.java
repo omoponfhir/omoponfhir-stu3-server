@@ -488,7 +488,24 @@ public class SmartAuthServicesController {
 	@PostMapping(value = "/introspect")
 	public ResponseEntity<IntrospectResponse> introspect(@RequestParam(name = "token", required = true) String token,
 			Model model) {
+		IntrospectResponse introspectResponse;
+		Long now = (new Date()).getTime();
 
+		String authType = System.getenv("AUTH_TYPE");
+		if (authType != null && (authType.startsWith("Bearer ") || authType.startsWith("bearer "))) {
+			String localApiKey = authType.substring(7);
+			logger.debug("local bearer "+token);
+			if (token.equals(localApiKey)) {
+				// This is local bearer request. We allow with only Read. 
+				// And we always give a new 5min expiration time, which means it never expires.
+				introspectResponse = new IntrospectResponse(true, "launch profile openid online_access user/*.read");
+				introspectResponse.setExp((now/1000) + SmartAuthServicesController.timeout_min*60);
+				introspectResponse.setTokenType("Bearer");
+
+				return new ResponseEntity<IntrospectResponse>(introspectResponse, HttpStatus.OK);
+			}
+		}
+		
 		SmartOnFhirSessionEntry smartSession = smartOnFhirSession.getSmartOnFhirAppByToken(token);
 		if (smartSession == null) {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid_client");
@@ -499,14 +516,18 @@ public class SmartAuthServicesController {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid_client");
 		}
 
-		Long now = (new Date()).getTime();
 		Long expire = smartSession.getAccessTokenExpirationDT().getTime();
 		if (expire <= now) {
 			// Expired. 401 respond with invalid_grant
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid_grant");
 		}
 
-		IntrospectResponse introspectResponse = new IntrospectResponse(true, smartApp.getScope());
+		introspectResponse = new IntrospectResponse(true, smartApp.getScope());
+		String patient = getPatientIdFromJWT(smartSession.getAuthorizationCode());
+		if (patient != null && !patient.isEmpty()) {
+			introspectResponse.setPatient(patient);
+		}
+
 		introspectResponse.setExp(expire / 1000);
 		introspectResponse.setTokenType("Bearer");
 

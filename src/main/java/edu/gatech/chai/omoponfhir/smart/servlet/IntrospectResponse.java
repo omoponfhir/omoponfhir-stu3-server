@@ -7,6 +7,7 @@ public class IntrospectResponse {
 	private String scope;
 	private Long exp;
 	private String token_type;
+	private String patient;
 	
 	public IntrospectResponse() {}
 
@@ -53,5 +54,15 @@ public class IntrospectResponse {
 	@JsonProperty("token_type")
 	public void setTokenType(String token_type) {
 		this.token_type = token_type;
+	}
+
+	@JsonProperty("patient")
+	public String getPatient() {
+		return this.patient;
+	}
+	
+	@JsonProperty("patient")
+	public void setPatient(String patient) {
+		this.patient = patient;
 	}
 }

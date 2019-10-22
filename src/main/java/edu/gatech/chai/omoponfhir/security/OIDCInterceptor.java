@@ -195,19 +195,22 @@ public class OIDCInterceptor extends InterceptorAdapter {
 					+ getClientSecret());
 			Authorization myAuth = new Authorization(getIntrospectUrl(), getClientId(), getClientSecret());
 
-			// Now we have a valid access token. Now, check Token type
-			if (myAuth.checkBearer() == false) {
-				throw new AuthenticationException("Not Token Bearer");
-			}
-
 			String err_msg = myAuth.introspectToken(theRequest);
 			if (err_msg.isEmpty() == false) {
+				ourLog.debug("IntrospectToken failed with "+err_msg);
 				throw new AuthenticationException(err_msg);
+			}
+
+			// Now we have a valid access token. Now, check Token type
+			if (myAuth.checkBearer() == false) {
+				ourLog.debug("IntrospectToken failed. Not Token Bearer");
+				throw new AuthenticationException("Not Token Bearer");
 			}
 
 			// Check scope.
 			// Fine grain checking should be done after request is parsed. Save
 			// this auth to smartOnFhir attribute.
+			ourLog.debug("Adding auth object to RequestDetails attribute");
 			theRequestDetails.setAttribute(OIDCInterceptor.authKeyName, myAuth);
 
 			return true;
@@ -226,14 +229,20 @@ public class OIDCInterceptor extends InterceptorAdapter {
 	@Override
 	public void incomingRequestPreHandled(RestOperationTypeEnum theOperation,
 			ActionRequestDetails theProcessedRequest) {
+		
+		ourLog.debug("Request is parsed. Now in pre handled interceptor");
 		RequestDetails requestDetails = theProcessedRequest.getRequestDetails();
 
 		Authorization myAuth = (Authorization) requestDetails.getAttribute(OIDCInterceptor.authKeyName);
 		if (myAuth != null) {
 			if (myAuth.allowRequest(requestDetails) == false) {
 				// Something happened while checking fine grain auth. Throw exception.
-				throw new AuthenticationException("Resourcee level scope and operation checking failed");
+				ourLog.debug("Resourcee level scope and operation checking failed");
+				throw new AuthenticationException("Resource level scope or operation is not authorized. Check if you are authorized for patient, resource, or read/write");
 			}
+			ourLog.debug("Request allowed");
+		} else {
+			ourLog.debug("No Auth object. Fine grain checking disabled");
 		}
 	}
 

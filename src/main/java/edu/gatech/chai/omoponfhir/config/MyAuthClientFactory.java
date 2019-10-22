@@ -49,6 +49,7 @@ public class MyAuthClientFactory implements ITestingUiClientFactory {
 				}
 			} else if (authType.startsWith("Bearer ") || authType.startsWith("bearer ")) {
 				// Bearer API key. This overwrites the apiKey from theRequest parameter
+				apiKey = authType.substring(7);
 			}
 		}
 		

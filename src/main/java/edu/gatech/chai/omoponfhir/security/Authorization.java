@@ -62,6 +62,7 @@ public class Authorization {
 	private String userId;
 	private String password;
 	private String token_type;
+	private String patient;
 	private int myTimeSkewAllowance = 300;
 	private boolean active = false;
 	private boolean expired = true;
@@ -79,23 +80,23 @@ public class Authorization {
 		this.clientId = clientId;
 		this.clientSecret = clientSecret;
 	}
-	
+
 	public String getClientId() {
 		return clientId;
 	}
-	
+
 	public String getUserId() {
 		return userId;
 	}
-		
-	private HttpHeaders createHeaders () {
+
+	private HttpHeaders createHeaders() {
 		HttpHeaders httpHeaders = new HttpHeaders();
-		String auth = clientId+":"+clientSecret;
+		String auth = clientId + ":" + clientSecret;
 		byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName("US-ASCII")));
 		String authHeader = "Basic " + new String(encodedAuth);
 		httpHeaders.set("Authorization", authHeader);
 		httpHeaders.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
-		
+
 		return httpHeaders;
 //		return new HttpHeaders() {
 //			{
@@ -119,10 +120,12 @@ public class Authorization {
 
 			// Get the access token
 			String accessToken = oauthRequest.getAccessToken();
+			logger.debug("Access Token for Introspect:" + accessToken);
+
 			if (introspectToken(accessToken) == false) {
 				return "Invalid Access Token";
 			}
-									
+
 		} catch (OAuthSystemException | OAuthProblemException e) {
 			e.printStackTrace();
 			return "Invalid Auth Request";
@@ -130,79 +133,93 @@ public class Authorization {
 
 		return "";
 	}
-	
+
 	public boolean introspectToken(String token) {
 		// Sanity Check.
 		if (token == null || token.isEmpty()) {
 			return false;
 		}
-		
+
 		// Save the token for a future use.
 		this.token = token;
-		
+
 		// Introspect the token
 		RestTemplate restTemplate = new RestTemplate();
 		HttpEntity<String> reqAuth = new HttpEntity<String>(createHeaders());
 		ResponseEntity<String> response;
-		
-		String introspectTokenUrl = url+"?token="+this.token;
+
+		String introspectTokenUrl = url + "?token=" + this.token;
 		response = restTemplate.exchange(introspectTokenUrl, HttpMethod.POST, reqAuth, String.class);
 		HttpStatus statusCode = response.getStatusCode();
 		if (statusCode.is2xxSuccessful() == false) {
+			logger.debug("Introspect response with statusCode:"+statusCode.toString());
 			return false;
 		}
-		
-		System.out.println("IntrospectToken: "+response.getBody());
-		
+
+		System.out.println("IntrospectToken: " + response.getBody());
+
 		// First check the token status. Turn the body into JSON.
 		JSONObject jsonObject = new JSONObject(response.getBody());
 		if (jsonObject.getBoolean("active") != true) {
 			// This is not active token.
 			active = false;
+			logger.debug("Introspect response with non-Active token");
 			return false;
 		}
 		active = true;
-		
+
 		// Get the expiration time.
 //		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-		Date expDate;
-		try {
-			int exp_ts = jsonObject.getInt("exp");
-			expDate = new java.util.Date((long)exp_ts*1000);
-//			expDate = df.parse(exp_str);
-		} catch (JSONException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			expired = true;
-			return false;
+		if (jsonObject.has("exp")) {
+			Long exp_ts = jsonObject.getInt("exp") * 1000L;
+			Long now = (new Date()).getTime();
+
+			if (exp_ts <= (now-myTimeSkewAllowance)) {
+				expired = true;
+				logger.debug("Introspect response with expired token");
+				return false;
+			}
+
+			// Date expDate;
+//			try {
+//				expDate = new java.util.Date((long) exp_ts * 1000);
+////			expDate = df.parse(exp_str);
+//			} catch (JSONException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//				expired = true;
+//				return false;
+//			}
+//
+//			Date minAllowableExpirationTime = new Date(System.currentTimeMillis() - (myTimeSkewAllowance * 1000L));
+//			if (expDate != null && !expDate.before(minAllowableExpirationTime)) {
+//				// expired.
+//				expired = true;
+//				return false;
+//			}
 		}
-	
-		Date minAllowableExpirationTime = new Date(System.currentTimeMillis()-(myTimeSkewAllowance * 1000L));
-		if (expDate != null && expDate.before(minAllowableExpirationTime)) {
-			// expired.
-			expired = true;
-			return false;
-		}
-		
 		// Store the received information such as scope, user_id, client_id, etc...
 		if (jsonObject.has("sub"))
 			userId = jsonObject.getString("sub");
 		if (jsonObject.has("token_type"))
 			token_type = jsonObject.getString("token_type");
+		if (jsonObject.has("patient") && !jsonObject.isNull("patient"))
+			patient = jsonObject.getString("patient");
 
-		String[] scopeValues = jsonObject.getString("scope")
-				.trim().replaceAll("\\+", " ")
-				.split(" ");
+		String[] scopeValues = jsonObject.getString("scope").trim().replaceAll("\\+", " ").split(" ");
 		scopeSet = new HashSet<String>(Arrays.asList(scopeValues));
-		if (scopeSet.isEmpty()) return false;
-		
+		if (scopeSet.isEmpty()) {
+			logger.debug("ScopeSet has empty scopes");
+			return false;
+		}
+
 		if (scopeSet.contains("user/*.*")) {
 			is_admin = true;
 		}
-		
+
 		return true;
 	}
-	
+
 	public boolean checkBearer() {
 		if (token_type != null && token_type.equalsIgnoreCase("Bearer")) {
 			return true;
@@ -210,30 +227,31 @@ public class Authorization {
 			return false;
 		}
 	}
-	
+
 	public boolean assertScope(String myScope) {
 		for (String scope : scopeSet) {
 			if (scope.equalsIgnoreCase(myScope))
 				return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	public boolean allowRequest(RequestDetails theRequestDetails) {
 		if (checkBearer() == false) {
 			return false;
 		}
-		
+
 		if (is_admin) {
 			return true;
 		}
-		
+
 		// TODO: Check the request detail and compare with scope. If out of scope, then
-		//       return false.
-		// We need to have user or patient level permission checking. For now, user/ and patient/ scope has
-		// all patients permission.  We need to revisit this.
-		// 
+		// return false.
+		// We need to have user or patient level permission checking. For now, user/ and
+		// patient/ scope has
+		// all patients permission. We need to revisit this.
+		//
 		String resourceName = theRequestDetails.getResourceName();
 		if (resourceName == null) {
 			Map<String, String[]> params = theRequestDetails.getParameters();
@@ -243,33 +261,93 @@ public class Authorization {
 				if (page_id != null && !page_id.isEmpty()) {
 					// This is page loading. Then, it means the original request passed.
 					// If this is wrong page_id, then the server will not able to locate that.
-					System.out.println("[THIS SHOULD NOT HAPPEND] Page loading: "+page_id+". We are assuming this has already authorized.");
-					logger.info("[THIS SHOULD NOT HAPPEND] Request ("+theRequestDetails.getCompleteUrl()+") is page request with id="+page_id+" We are assuming this has already authorized.");
+					System.out.println("[THIS SHOULD NOT HAPPEND] Page loading: " + page_id
+							+ ". We are assuming this has already authorized.");
+					logger.info("[THIS SHOULD NOT HAPPEND] Request (" + theRequestDetails.getCompleteUrl()
+							+ ") is page request with id=" + page_id + " We are assuming this has already authorized.");
 
 					return true;
 				}
 			}
 		}
-		
+
 		RestOperationTypeEnum resourceOperationType = theRequestDetails.getRestOperationType();
 		for (String scope : scopeSet) {
-			// If the scope is not form of <patient or user>/<resource>.<access>, (eg) patient/*.read,
+			// If the scope is not form of <patient or user>/<resource>.<access>, (eg)
+			// patient/*.read,
 			// then, we skip to next scope as this only evaluates the resource level check.
 			String patternString = "(user|patient)\\/[a-zA-Z*]+.(read|write|\\*)";
 			Pattern pattern = Pattern.compile(patternString);
 			Matcher matcher = pattern.matcher(scope);
-			if (matcher.matches() == false) continue;
-			
+			if (matcher.matches() == false)
+				continue;
+
 			String[] scopeDetail = scope.split("/");
-			if (resourceOperationType ==  RestOperationTypeEnum.READ || 
-					resourceOperationType == RestOperationTypeEnum.VREAD ||
-					resourceOperationType == RestOperationTypeEnum.SEARCH_TYPE) {
+			logger.debug("checking scope:" + scope + " scopeDetail[0]=" + scopeDetail[0]);
+			if ("patient".equals(scopeDetail[0])) {
+				if (patient == null || patient.isEmpty())
+					continue;
+
+				boolean found = false;
+				if ("Patient".equals(resourceName)) {
+					logger.debug("retrieving Patient by client. This scoped is bound to patient_id:" + patient
+							+ " and received patient:" + theRequestDetails.getId().getIdPart());
+					if (!patient.equals(theRequestDetails.getId().getIdPart())) {
+						continue;
+					} else {
+						found = true;
+					}
+				} else {
+					// Trying to get a resource other than Patient. Check if we have
+					// patient or subject parameters. If not, throw exception.
+					Map<String, String[]> reqParam = theRequestDetails.getParameters();
+					String[] patientIds = reqParam.get("patient");
+					if (patientIds == null || patientIds.length == 0) {
+						patientIds = reqParam.get("subject");
+						if (patientIds != null && patientIds.length > 0) {
+							found = false;
+							for (String patientId : patientIds) {
+								logger.debug(
+										"checking subject Patient id:" + patientId + " with id in Auth:" + patient);
+								if (patientId.startsWith("Patient/")) {
+									String id = patientId.substring(8);
+									if (id.equals(patient)) {
+										found = true;
+										break;
+									}
+								}
+							}
+						}
+					} else {
+						// patient id.
+						found = false;
+						for (String patientId : patientIds) {
+							logger.debug("check patient id:" + patientId + " with id in Auth:" + patient);
+							if (patient.equals(patientId)) {
+								found = true;
+								break;
+							}
+						}
+					}
+				}
+
+				if (!found) {
+					logger.debug("Couldn't find patient/ scope matches with patient id=" + patient);
+					continue;
+				} else {
+					logger.debug("patient/ scope matches with patient id=" + patient);
+				}
+			}
+
+			if (resourceOperationType == RestOperationTypeEnum.READ
+					|| resourceOperationType == RestOperationTypeEnum.VREAD
+					|| resourceOperationType == RestOperationTypeEnum.SEARCH_TYPE) {
 				if ((scopeDetail[1].equalsIgnoreCase("*.read") || scopeDetail[1].equalsIgnoreCase("*.*"))) {
 					return true;
 				} else {
 					String[] scopeResource = scopeDetail[1].split("\\.");
-					if (scopeResource[0].equalsIgnoreCase(resourceName) && 
-							(scopeResource[1].equalsIgnoreCase("read") || scopeResource[1].equalsIgnoreCase("*"))) {
+					if (scopeResource[0].equalsIgnoreCase(resourceName)
+							&& (scopeResource[1].equalsIgnoreCase("read") || scopeResource[1].equalsIgnoreCase("*"))) {
 						return true;
 					}
 				}
@@ -279,55 +357,62 @@ public class Authorization {
 					return true;
 				} else {
 					String[] scopeResource = scopeDetail[1].split("\\.");
-					if (scopeResource[0].equalsIgnoreCase(resourceName) && 
-							(scopeResource[1].equalsIgnoreCase("write") || scopeResource[1].equalsIgnoreCase("*"))) {
+					if (scopeResource[0].equalsIgnoreCase(resourceName)
+							&& (scopeResource[1].equalsIgnoreCase("write") || scopeResource[1].equalsIgnoreCase("*"))) {
 						return true;
 					}
 				}
 			}
 		}
-		
-		System.out.println(resourceName+" "+resourceOperationType.name()+" request failed to get Authorization.");
-		logger.error("Request ("+theRequestDetails.getCompleteUrl()+") is not authorized:"+resourceName+" "+resourceOperationType.name()+" request failed to get Authorization.");
+
+		System.out.println(resourceName + " " + resourceOperationType.name() + " request failed to get Authorization.");
+		logger.error("Request (" + theRequestDetails.getCompleteUrl() + ") is not authorized:" + resourceName + " "
+				+ resourceOperationType.name() + " request failed to get Authorization.");
 		return false;
 	}
-	
-	// Belows are for out-of-band authorization to support Smart on FHIR internal communications.
-	// This is not Smart on FHIR standard. This is to support Smart on FHIR's authorization server.
+
+	// Belows are for out-of-band authorization to support Smart on FHIR internal
+	// communications.
+	// This is not Smart on FHIR standard. This is to support Smart on FHIR's
+	// authorization server.
 	public boolean asBasicAuth(HttpServletRequest request) {
 		String authString = request.getHeader("Authorization");
-		if (authString == null) return false;
-		
-		logger.debug("asBasicAuth auth header:"+authString);
+		if (authString == null)
+			return false;
+
+		logger.debug("asBasicAuth auth header:" + authString);
 //		String[] credential = OAuthUtils.decodeClientAuthenticationHeader(authString);
-		
-		if (authString.regionMatches(0, "Basic", 0, 5) == false) return false; // Not a basic Auth
-		
+
+		if (authString.regionMatches(0, "Basic", 0, 5) == false)
+			return false; // Not a basic Auth
+
 		String credentialString = StringUtils.newStringUtf8(Base64.decodeBase64(authString.substring(6)));
-		if (credentialString == null) return false;
-		
+		if (credentialString == null)
+			return false;
+
 		String[] credential = credentialString.trim().split(":");
-		
-		if (credential.length != 2) return false;
-		
+
+		if (credential.length != 2)
+			return false;
+
 		userId = credential[0];
 		password = credential[1];
-		
-		logger.debug("asBasicAuth:"+userId+":"+password);
-		
+
+		logger.debug("asBasicAuth:" + userId + ":" + password);
+
 		if (userId.equalsIgnoreCase(clientId) && password.equalsIgnoreCase(clientSecret))
 			return true;
-		else 
+		else
 			return false;
 	}
-	
+
 	public boolean asBearerAuth(HttpServletRequest request) {
 		OAuthAccessResourceRequest oauthRequest;
 		try {
 			oauthRequest = new OAuthAccessResourceRequest(request, ParameterStyle.HEADER);
-	        // Get the access token
-	        String accessToken = oauthRequest.getAccessToken();
-	        return introspectToken(accessToken);
+			// Get the access token
+			String accessToken = oauthRequest.getAccessToken();
+			return introspectToken(accessToken);
 		} catch (OAuthSystemException | OAuthProblemException e) {
 			e.printStackTrace();
 			return false;
