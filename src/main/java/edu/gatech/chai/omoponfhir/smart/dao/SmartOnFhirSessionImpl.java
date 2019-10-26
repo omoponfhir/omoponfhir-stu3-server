@@ -185,7 +185,7 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 				sessionEntry = createSessionEntry(rs);
 				logger.info("Session" + printSessionInfo(sessionEntry));
 			} else {
-				logger.info("No App Entry Exist with access_token = " + token);
+				logger.info("No Session Entry Exist with access_token = " + token);
 			}
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
@@ -207,7 +207,7 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 				sessionEntry = createSessionEntry(rs);
 				logger.info("Session" + printSessionInfo(sessionEntry));
 			} else {
-				logger.info("No App Entry Exist with refresh token = " + token);
+				logger.info("No Session Entry Exist with refresh token = " + token);
 			}
 		} catch (SQLException e) {
 			logger.error(e.getMessage());

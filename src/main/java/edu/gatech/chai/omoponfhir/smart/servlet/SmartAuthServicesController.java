@@ -488,7 +488,7 @@ public class SmartAuthServicesController {
 	@PostMapping(value = "/introspect")
 	public ResponseEntity<IntrospectResponse> introspect(@RequestParam(name = "token", required = true) String token,
 			Model model) {
-		IntrospectResponse introspectResponse;
+		IntrospectResponse introspectResponse = null;
 		Long now = (new Date()).getTime();
 
 		String authType = System.getenv("AUTH_TYPE");
@@ -508,18 +508,21 @@ public class SmartAuthServicesController {
 		
 		SmartOnFhirSessionEntry smartSession = smartOnFhirSession.getSmartOnFhirAppByToken(token);
 		if (smartSession == null) {
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid_client");
+//			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid_client");
+			return new ResponseEntity<IntrospectResponse>(introspectResponse, HttpStatus.UNAUTHORIZED);
 		}
 
 		SmartOnFhirAppEntry smartApp = smartOnFhirApp.getSmartOnFhirApp(smartSession.getAppId());
 		if (smartApp == null) {
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid_client");
+//			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid_client");
+			return new ResponseEntity<IntrospectResponse>(introspectResponse, HttpStatus.UNAUTHORIZED);
 		}
 
 		Long expire = smartSession.getAccessTokenExpirationDT().getTime();
 		if (expire <= now) {
 			// Expired. 401 respond with invalid_grant
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid_grant");
+//			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid_grant");
+			return new ResponseEntity<IntrospectResponse>(introspectResponse, HttpStatus.UNAUTHORIZED);
 		}
 
 		introspectResponse = new IntrospectResponse(true, smartApp.getScope());
