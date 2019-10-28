@@ -315,6 +315,11 @@ public class Authorization {
 										found = true;
 										break;
 									}
+								} else {
+									if (patientId.equals(patient)) {
+										found = true;
+										break;
+									}
 								}
 							}
 						}
