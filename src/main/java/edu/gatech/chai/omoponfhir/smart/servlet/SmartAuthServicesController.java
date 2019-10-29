@@ -76,6 +76,7 @@ public class SmartAuthServicesController {
 	private String jwtSecret;
 	private String smartStyleUrl;
 	private boolean simEhr;
+	private int accessTokenTimeoutMinutes;
 
 	private String baseUrl = "";
 
@@ -121,6 +122,13 @@ public class SmartAuthServicesController {
 		}
 
 		simEhr = false;
+		
+		if (System.getenv("ACCESS_TOKEN_TIMEOUT_MIN") != null) {
+			accessTokenTimeoutMinutes = Integer.valueOf(System.getenv("ACCESS_TOKEN_TIMEOUT_MIN"));
+		} else {
+			accessTokenTimeoutMinutes = SmartAuthServicesController.timeout_min;
+		}
+		
 	}
 
 //	@ModelAttribute("oauth2attr")
@@ -391,58 +399,76 @@ public class SmartAuthServicesController {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "unsupported_grant_type");
 		}
 
+		Long now = (new Date()).getTime();
+
 		SmartOnFhirAppEntry smartApp;
 		SmartOnFhirSessionEntry smartSession;
 		// If this is refresh token request, we handle it differently,
 		if ("refresh_token".equals(grantType)) {
 			// if refresh_token does not exist, we return error.
 			if (refreshCode == null || refreshCode.isEmpty()) {
+				logger.debug("Refresh token does not exist.");
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid_request");
 			}
 
 			smartSession = smartOnFhirSession.getSmartOnFhirAppByRefreshToken(refreshCode);
 			if (smartSession == null) {
+				logger.debug("Session does not exist for the provided refersh token: "+refreshCode);
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid_grant");
 			}
 
 			appId = smartSession.getAppId();
 			code = smartSession.getAuthorizationCode();
 			smartApp = smartOnFhirApp.getSmartOnFhirApp(appId);
+
+			// Spec is asking to do the authentication again if we require authentication.
+			// As we are just testing, we just check the refresh token. 
+			String refreshToken = smartSession.getRefreshToken();			
+			if (!refreshToken.equals(refreshCode)) {
+				// Incorrect refresh token.
+				logger.debug("Incorrect refresh token ("+refreshCode+") provided. Correct refresh token:"+refreshToken);
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid_grant");
+			}
+			
+			
+//			if (smartSession.getAccessTokenExpirationDT() != null) {
+//				Long expire = smartSession.getAccessTokenExpirationDT().getTime();
+//				if (expire <= now) {
+//					logger.info("Access Token for session-id: " + smartSession.getSessionId() + " is expired");
+//
+//					// Expired. 400 respond with invalid_grant
+//					throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid_grant");
+//				}
+//			}
+
 		} else {
+			// This is a token request.  			
 			smartApp = smartOnFhirApp.getSmartOnFhirApp(appId, redirectUri);
 			if (smartApp == null) {
 				// Invalid client-id. We should send with bad request.
+				logger.debug("App does not exist for the AppID:"+appId+", and redirectUri:"+redirectUri);
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid_request");
 			}
 			smartSession = smartOnFhirSession.getSmartOnFhirSession(appId, code);
 			if (smartSession == null) {
+				logger.debug("Session does not exist for the AppID:"+appId+", and auth code:"+code);
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid_request");
 			}
-		}
-
-		Long now = (new Date()).getTime();
-		Long expire = smartSession.getAuthCodeExpirationDT().getTime();
-		if (expire <= now) {
-			logger.info("Authorization for session-id: " + smartSession.getSessionId() + " is expired");
-
-			// Expired. 400 respond with invalid_grant
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid_grant");
-		}
-
-		// See if token is expired.
-		if (smartSession.getAccessTokenExpirationDT() != null) {
-			expire = smartSession.getAccessTokenExpirationDT().getTime();
+			
+			// Check if we are in the authorized time window.
+			Long expire = smartSession.getAuthCodeExpirationDT().getTime();
 			if (expire <= now) {
-				logger.info("Access Token for session-id: " + smartSession.getSessionId() + " is expired");
+				logger.info("Authorization for session-id: " + smartSession.getSessionId() + " is expired");
 
 				// Expired. 400 respond with invalid_grant
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid_grant");
 			}
 		}
 
-		// generate access_token if needed.
-		TokenResponse tokenResponse = new TokenResponse();
+		// It is OK the access token is expired as long as the auth code is not expired.
+		// Again, if this is refresh token, we move on.
 
+		// generate access_token if needed.
 		String accessToken = smartSession.getAccessToken();
 		String refreshToken = smartSession.getRefreshToken();
 		Long expiration;
@@ -455,7 +481,7 @@ public class SmartAuthServicesController {
 			}
 			smartOnFhirSession.putAccessCode(appId, code, accessToken);
 
-			// We only change the refresh token
+			// Add new refresh token as well as the access token is new.
 			exists = true;
 			while (exists) {
 				refreshToken = SmartAuthServicesController.generateNewToken();
@@ -463,11 +489,20 @@ public class SmartAuthServicesController {
 					exists = false;
 			}
 			smartOnFhirSession.putRefereshCode(appId, code, refreshToken);
-			expiration = (long) SmartAuthServicesController.timeout_min * 60;
-		} else {
-			expiration = (now - expire) / 1000;
-		}
+		} 
+//		else {
+//			expiration = (now - expire) / 1000;
+//		}
+		
+		// We will issue new access token expiration date. Update Access Token Timeout.
+		Calendar calendar = Calendar.getInstance();
+		calendar.add(Calendar.MINUTE, accessTokenTimeoutMinutes);
+		java.sql.Date expiresIn = new java.sql.Date(calendar.getTimeInMillis());
+		smartOnFhirSession.updateAccessTokenTimeout(smartSession.getSessionId(), expiresIn);
+		
+		expiration = (long) accessTokenTimeoutMinutes * 60;
 
+		TokenResponse tokenResponse = new TokenResponse();
 		tokenResponse.setAccessToken(accessToken);
 		tokenResponse.setRefreshToken(refreshToken);
 		tokenResponse.setExpiresIn(expiration);
@@ -499,7 +534,7 @@ public class SmartAuthServicesController {
 				// This is local bearer request. We allow with only Read. 
 				// And we always give a new 5min expiration time, which means it never expires.
 				introspectResponse = new IntrospectResponse(true, "launch profile openid online_access user/*.read");
-				introspectResponse.setExp((now/1000) + SmartAuthServicesController.timeout_min*60);
+				introspectResponse.setExp((now/1000) + accessTokenTimeoutMinutes*60);
 				introspectResponse.setTokenType("Bearer");
 
 				return new ResponseEntity<IntrospectResponse>(introspectResponse, HttpStatus.OK);
@@ -614,7 +649,7 @@ public class SmartAuthServicesController {
 		sessionEntry.setState(state);
 
 		Calendar calendar = Calendar.getInstance();
-		calendar.add(Calendar.MINUTE, SmartAuthServicesController.timeout_min);
+		calendar.add(Calendar.MINUTE, accessTokenTimeoutMinutes);
 		java.sql.Date expiresIn = new java.sql.Date(calendar.getTimeInMillis());
 		sessionEntry.setAuthCodeExpirationDT(expiresIn);
 
@@ -827,6 +862,7 @@ public class SmartAuthServicesController {
 
 	@DeleteMapping(value = "/app-delete")
 	public String appDelete(@RequestParam(name = "client_id", required = true) String appId, Model model) {
+		smartOnFhirSession.deleteByAppId(appId);
 		smartOnFhirApp.delete(appId);
 
 		// Alway pass this information so that JSP can route to correct endpoint

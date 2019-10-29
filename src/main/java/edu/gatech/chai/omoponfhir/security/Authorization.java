@@ -152,7 +152,7 @@ public class Authorization {
 		response = restTemplate.exchange(introspectTokenUrl, HttpMethod.POST, reqAuth, String.class);
 		HttpStatus statusCode = response.getStatusCode();
 		if (statusCode.is2xxSuccessful() == false) {
-			logger.debug("Introspect response with statusCode:"+statusCode.toString());
+			logger.debug("Introspect response with statusCode:" + statusCode.toString());
 			return false;
 		}
 
@@ -174,7 +174,7 @@ public class Authorization {
 			Long exp_ts = jsonObject.getInt("exp") * 1000L;
 			Long now = (new Date()).getTime();
 
-			if (exp_ts <= (now-myTimeSkewAllowance)) {
+			if (exp_ts <= (now - myTimeSkewAllowance)) {
 				expired = true;
 				logger.debug("Introspect response with expired token");
 				return false;
@@ -307,8 +307,8 @@ public class Authorization {
 						if (patientIds != null && patientIds.length > 0) {
 							found = false;
 							for (String patientId : patientIds) {
-								logger.debug(
-										"checking subject Patient id:" + patientId + " with id in Auth:" + patient);
+								logger.debug("Checking subject=Patient/<id>:" + patientId
+										+ " with <id> in Introspect response:" + patient);
 								if (patientId.startsWith("Patient/")) {
 									String id = patientId.substring(8);
 									if (id.equals(patient)) {
@@ -316,6 +316,18 @@ public class Authorization {
 										break;
 									}
 								} else {
+									logger.error(
+											"subject= parameter is required to have subject related Resource. Resource/ is not found. Request URL:"
+													+ theRequestDetails.getCompleteUrl());
+								}
+							}
+						} else {
+							patientIds = reqParam.get("subject:Patient");
+							if (patientIds != null && patientIds.length > 0) {
+								found = false;
+								for (String patientId : patientIds) {
+									logger.debug("Checking subjec:Patientt=<id>:" + patientId
+											+ " with <id> in Introspect response:" + patient);
 									if (patientId.equals(patient)) {
 										found = true;
 										break;
@@ -327,7 +339,8 @@ public class Authorization {
 						// patient id.
 						found = false;
 						for (String patientId : patientIds) {
-							logger.debug("check patient id:" + patientId + " with id in Auth:" + patient);
+							logger.debug("Checking patient=<id>:" + patientId + " with <id> in Introspect response:"
+									+ patient);
 							if (patient.equals(patientId)) {
 								found = true;
 								break;
@@ -337,7 +350,8 @@ public class Authorization {
 				}
 
 				if (!found) {
-					logger.debug("Couldn't find patient/ scope matches with patient id=" + patient);
+					logger.debug("Couldn't find patient/ scope matches with patient id=" + patient + ". Request URL:"
+							+ theRequestDetails.getCompleteUrl());
 					continue;
 				} else {
 					logger.debug("patient/ scope matches with patient id=" + patient);
