@@ -42,43 +42,51 @@
 						<tr>
 							<td style="border:1px solid grey;">Condition</td>
 							<td style="border:1px solid grey;"><input type="checkbox" id="user_condition_r"
-								name="user_condition_r"> read</td>
+								name="user_condition_r"> read&nbsp;&nbsp;<input type="checkbox" id="user_condition_w"
+								name="user_condition_w"> write</td>
 						</tr>
 						<tr>
 							<td style="border:1px solid grey;">DocumentReference</td>
 							<td style="border:1px solid grey;"><input type="checkbox" id="user_documentreference_r"
-								name="user_documentreference_r"> read</td>
+								name="user_documentreference_r"> read&nbsp;&nbsp;<input type="checkbox" id="user_documentreference_w"
+								name="user_documentreference_w"> write</td>
 						</tr>
 						<tr>
 							<td style="border:1px solid grey;">Encounter</td>
 							<td style="border:1px solid grey;"><input type="checkbox" id="user_encounter_r"
-								name="user_encounter_r"> read</td>
+								name="user_encounter_r"> read&nbsp;&nbsp;<input type="checkbox" id="user_encounter_w"
+								name="user_encounter_w"> write</td>
 						</tr>
 						<tr>
 							<td style="border:1px solid grey;">MedicationStatement</td>
 							<td style="border:1px solid grey;"><input type="checkbox"
 								id="user_medicationstatement_r"
-								name="user_medicationstatement_r"> read</td>
+								name="user_medicationstatement_r"> read&nbsp;&nbsp;<input type="checkbox" id="user_medicationstatement_w"
+								name="user_medicationstatement_w"> write</td>
 						</tr>
 						<tr>
 							<td style="border:1px solid grey;">MedicationRequest</td>
 							<td style="border:1px solid grey;"><input type="checkbox" id="user_medicationrequest_r"
-								name="user_medicationrequest_r"> read</td>
+								name="user_medicationrequest_r"> read&nbsp;&nbsp;<input type="checkbox" id="user_medicationrequest_w"
+								name="user_medicationrequest_w"> write</td>
 						</tr>
 						<tr>
 							<td style="border:1px solid grey;">Observation</td>
 							<td style="border:1px solid grey;"><input type="checkbox" id="user_observation_r"
-								name="user_observation_r"> read</td>
+								name="user_observation_r"> read&nbsp;&nbsp;<input type="checkbox" id="user_observation_w"
+								name="user_observation_w"> write</td>
 						</tr>
 						<tr>
 							<td style="border:1px solid grey;">Patient</td>
 							<td style="border:1px solid grey;"><input type="checkbox" id="user_patient_r"
-								name="user_patient_r"> read</td>
+								name="user_patient_r"> read&nbsp;&nbsp;<input type="checkbox" id="user_patient_w"
+								name="user_patient_w"> write</td>
 						</tr>
 						<tr>
 							<td style="border:1px solid grey;">Procedure</td>
 							<td style="border:1px solid grey;"><input type="checkbox" id="user_procedure_r"
-								name="user_procedure_r"> read</td>
+								name="user_procedure_r"> read&nbsp;&nbsp;<input type="checkbox" id="user_procedure_w"
+								name="user_procedure_w"> write</td>
 						</tr>
 					</table></td>
 				<td><b>Patient Scopes:</b>
@@ -90,43 +98,51 @@
 						<tr>
 							<td style="border:1px solid grey;">Condition</td>
 							<td style="border:1px solid grey;"><input type="checkbox" id="patient_condition_r"
-								name="patient_condition_r"> read</td>
+								name="patient_condition_r"> read&nbsp;&nbps;<input type="checkbox" id="patient_condition_w"
+								name="patient_condition_w"> write</td>
 						</tr>
 						<tr>
 							<td style="border:1px solid grey;">DocumentReference</td>
 							<td style="border:1px solid grey;"><input type="checkbox" id="patient_documentreference_r"
-								name="patient_documentreference_r"> read</td>
+								name="patient_documentreference_r"> read&nbsp;&nbps;<input type="checkbox" id="patient_documentreference_w"
+								name="patient_documentreference_w"> write</td>
 						</tr>
 						<tr>
 							<td style="border:1px solid grey;">Encounter</td>
 							<td style="border:1px solid grey;"><input type="checkbox" id="patient_encounter_r"
-								name="patient_encounter_r"> read</td>
+								name="patient_encounter_r"> read&nbsp;&nbps;<input type="checkbox" id="patient_encounter_w"
+								name="patient_encounter_w"> write</td>
 						</tr>
 						<tr>
 							<td style="border:1px solid grey;">MedicationStatement</td>
 							<td style="border:1px solid grey;"><input type="checkbox"
 								id="patient_medicationstatement_r"
-								name="patient_medicationstatement_r"> read</td>
+								name="patient_medicationstatement_r"> read&nbsp;&nbps;<input type="checkbox" id="patient_medicationstatement_w"
+								name="patient_medicationstatement_w"> write</td>
 						</tr>
 						<tr>
 							<td style="border:1px solid grey;">MedicationRequest</td>
 							<td style="border:1px solid grey;"><input type="checkbox" id="patient_medicationrequest_r"
-								name="patient_medicationrequest_r"> read</td>
+								name="patient_medicationrequest_r"> read&nbsp;&nbps;<input type="checkbox" id="patient_medicationrequest_w"
+								name="patient_medicationrequest_w"> write</td>
 						</tr>
 						<tr>
 							<td style="border:1px solid grey;">Observation</td>
 							<td style="border:1px solid grey;"><input type="checkbox" id="patient_observation_r"
-								name="patient_observation_r"> read</td>
+								name="patient_observation_r"> read&nbsp;&nbps;<input type="checkbox" id="patient_observation_w"
+								name="patient_observation_w"> write</td>
 						</tr>
 						<tr>
 							<td style="border:1px solid grey;">Patient</td>
 							<td style="border:1px solid grey;"><input type="checkbox" id="patient_patient_r"
-								name="patient_patient_r"> read</td>
+								name="patient_patient_r"> read&nbsp;&nbps;<input type="checkbox" id="patient_patient_w"
+								name="patient_patient_w"> write</td>
 						</tr>
 						<tr>
 							<td style="border:1px solid grey;">Procedure</td>
 							<td style="border:1px solid grey;"><input type="checkbox" id="patient_procedure_r"
-								name="patient_procedure_r"> read</td>
+								name="patient_procedure_r"> read&nbsp;&nbps;<input type="checkbox" id="patient_procedure_w"
+								name="patient_procedure_w"> write</td>
 						</tr>
 					</table></td>
 			</tr>

@@ -34,32 +34,31 @@ public class MyAuthClientFactory implements ITestingUiClientFactory {
 		IGenericClient client = theFhirContext.newRestfulGenericClient(theServerBaseUrl);
 
 		String apiKey = theRequest.getParameter("apiKey");
-		String authType = System.getenv("AUTH_TYPE");
-		if (authType != null && !authType.isEmpty()) {
-			if (authType.startsWith("Basic ") || authType.startsWith("basic ")) {
-				// Basic Auth
-				String basicAuth = authType.substring(6);
-				String[] basicCredential = basicAuth.split(":");
-				if (basicCredential.length == 2) {
-					// Bust have two parameters
-					String username = basicCredential[0];
-					String password = basicCredential[1];
-					
-					client.registerInterceptor(new BasicAuthInterceptor(username, password));
-				}
-			} else if (authType.startsWith("Bearer ") || authType.startsWith("bearer ")) {
-				// Bearer API key. This overwrites the apiKey from theRequest parameter
-				apiKey = authType.substring(7);
+		String authBasic = System.getenv("AUTH_BASIC");
+		String authBearer = System.getenv("AUTH_BEARER");
+		if (authBasic != null && !authBasic.isEmpty()) {
+//			if (authType.startsWith("Basic ") || authType.startsWith("basic ")) {
+			// Basic Auth
+//				String basicAuth = authType.substring(6);
+			String[] basicCredential = authBasic.split(":");
+			if (basicCredential.length == 2) {
+				// Bust have two parameters
+				String username = basicCredential[0];
+				String password = basicCredential[1];
+
+				client.registerInterceptor(new BasicAuthInterceptor(username, password));
+			}
+		} else if (authBearer != null && (authBearer.startsWith("Bearer ") || authBearer.startsWith("bearer "))) {
+			// Bearer API key. This overwrites the apiKey from theRequest parameter
+			apiKey = authBearer.substring(7);
+			if (isNotBlank(apiKey)) {
+				client.registerInterceptor(new BearerTokenAuthInterceptor(apiKey));
 			}
 		}
-		
-		if (isNotBlank(apiKey)) {
-			client.registerInterceptor(new BearerTokenAuthInterceptor(apiKey));
-		} 
-		
+
 //		theFhirContext.getRestfulClientFactory().setConnectionRequestTimeout(600000);
 		theFhirContext.getRestfulClientFactory().setSocketTimeout(600000);
-		
+
 		return client;
 	}
 

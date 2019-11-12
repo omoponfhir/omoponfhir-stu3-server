@@ -33,7 +33,7 @@ import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.ParameterStyle;
 import org.apache.oltu.oauth2.rs.request.OAuthAccessResourceRequest;
-import org.json.JSONException;
+//import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -56,11 +56,10 @@ public class Authorization {
 	private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Authorization.class);
 
 	private String url;
-	private String clientId;
-	private String clientSecret;
+	private String authBasic;
 	private String token;
-	private String userId;
-	private String password;
+//	private String userId;
+//	private String password;
 	private String token_type;
 	private String patient;
 	private int myTimeSkewAllowance = 300;
@@ -71,28 +70,25 @@ public class Authorization {
 
 	public Authorization(String url) {
 		this.url = url;
-		this.clientId = "client";
-		this.clientSecret = "secret";
+		setAuthBasic("client_omop:secret");
 	}
 
-	public Authorization(String url, String clientId, String clientSecret) {
+	public Authorization(String url, String authBasic) {
 		this.url = url;
-		this.clientId = clientId;
-		this.clientSecret = clientSecret;
+		this.authBasic = authBasic;
 	}
 
-	public String getClientId() {
-		return clientId;
+	public String getAuthBasic() {
+		return authBasic;
 	}
-
-	public String getUserId() {
-		return userId;
+	
+	public void setAuthBasic(String authBasic) {
+		this.authBasic = authBasic;
 	}
 
 	private HttpHeaders createHeaders() {
 		HttpHeaders httpHeaders = new HttpHeaders();
-		String auth = clientId + ":" + clientSecret;
-		byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName("US-ASCII")));
+		byte[] encodedAuth = Base64.encodeBase64(authBasic.getBytes(Charset.forName("US-ASCII")));
 		String authHeader = "Basic " + new String(encodedAuth);
 		httpHeaders.set("Authorization", authHeader);
 		httpHeaders.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
@@ -111,7 +107,7 @@ public class Authorization {
 
 	public String introspectToken(HttpServletRequest request) {
 		// reset values;
-		userId = null;
+//		userId = null;
 		token_type = null;
 
 		OAuthAccessResourceRequest oauthRequest;
@@ -152,11 +148,11 @@ public class Authorization {
 		response = restTemplate.exchange(introspectTokenUrl, HttpMethod.POST, reqAuth, String.class);
 		HttpStatus statusCode = response.getStatusCode();
 		if (statusCode.is2xxSuccessful() == false) {
-			logger.debug("Introspect response with statusCode:" + statusCode.toString());
+			logger.debug("Introspect (token:"+token+") response with statusCode:" + statusCode.toString());
 			return false;
 		}
 
-		System.out.println("IntrospectToken: " + response.getBody());
+		System.out.println("IntrospectToken: " + response.getBody() + ", token: "+token);
 
 		// First check the token status. Turn the body into JSON.
 		JSONObject jsonObject = new JSONObject(response.getBody());
@@ -199,8 +195,9 @@ public class Authorization {
 //			}
 		}
 		// Store the received information such as scope, user_id, client_id, etc...
+		String userId = null; 
 		if (jsonObject.has("sub"))
-			userId = jsonObject.getString("sub");
+			userId = jsonObject.getString("sub"); // current found no need to use this.
 		if (jsonObject.has("token_type"))
 			token_type = jsonObject.getString("token_type");
 		if (jsonObject.has("patient") && !jsonObject.isNull("patient"))
@@ -354,7 +351,7 @@ public class Authorization {
 							+ theRequestDetails.getCompleteUrl());
 					continue;
 				} else {
-					logger.debug("patient/ scope matches with patient id=" + patient);
+					logger.debug("Found! patient/ scope matches with patient id=" + patient);
 				}
 			}
 
@@ -399,7 +396,7 @@ public class Authorization {
 		if (authString == null)
 			return false;
 
-		logger.debug("asBasicAuth auth header:" + authString);
+		logger.debug("asBasicAuth Authorization header:" + authString);
 //		String[] credential = OAuthUtils.decodeClientAuthenticationHeader(authString);
 
 		if (authString.regionMatches(0, "Basic", 0, 5) == false)
@@ -409,17 +406,17 @@ public class Authorization {
 		if (credentialString == null)
 			return false;
 
-		String[] credential = credentialString.trim().split(":");
-
-		if (credential.length != 2)
-			return false;
-
-		userId = credential[0];
-		password = credential[1];
-
-		logger.debug("asBasicAuth:" + userId + ":" + password);
-
-		if (userId.equalsIgnoreCase(clientId) && password.equalsIgnoreCase(clientSecret))
+//		String[] credential = credentialString.trim().split(":");
+//
+//		if (credential.length != 2)
+//			return false;
+//
+//		userId = credential[0];
+//		password = credential[1];
+//
+//		logger.debug("asBasicAuth:" + userId + ":" + password);
+//		if (userId.equalsIgnoreCase(clientId) && password.equalsIgnoreCase(clientSecret))
+		if (authBasic.equals(credentialString))
 			return true;
 		else
 			return false;

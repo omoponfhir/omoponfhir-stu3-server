@@ -53,6 +53,11 @@
 								<input type="checkbox" id="user_condition_r" name="user_condition_r" checked> read
 	<% } else { %>
 								<input type="checkbox" id="user_condition_r" name="user_condition_r"> read
+	<% } %>&nbsp;&nbsp;
+	<% if (scope.contains("user/Condition.write")) { %>
+								<input type="checkbox" id="user_condition_w" name="user_condition_w" checked> write
+	<% } else { %>
+								<input type="checkbox" id="user_condition_w" name="user_condition_w"> write
 	<% } %>
 							</td>
 						</tr>
@@ -63,6 +68,11 @@
 								<input type="checkbox" id="user_documentreference_r" name="user_documentreference_r" checked> read
 	<% } else { %>
 								<input type="checkbox" id="user_documentreference_r" name="user_documentreference_r"> read
+	<% } %>&nbsp;&nbsp;
+	<% if (scope.contains("user/DocumentReference.write")) { %>
+								<input type="checkbox" id="user_documentreference_w" name="user_documentreference_w" checked> write
+	<% } else { %>
+								<input type="checkbox" id="user_documentreference_w" name="user_documentreference_w"> write
 	<% } %>
 							</td>
 						</tr>
@@ -73,6 +83,11 @@
 								<input type="checkbox" id="user_encounter_r" name="user_encounter_r" checked> read
 	<% } else { %>
 								<input type="checkbox" id="user_encounter_r" name="user_encounter_r"> read
+	<% } %>&nbsp;&nbsp;
+	<% if (scope.contains("user/Encounter.write")) { %>
+								<input type="checkbox" id="user_encounter_w" name="user_encounter_w" checked> write
+	<% } else { %>
+								<input type="checkbox" id="user_encounter_w" name="user_encounter_w"> write
 	<% } %>
 							</td>
 						</tr>
@@ -83,6 +98,11 @@
 								<input type="checkbox" id="user_medicationstatement_r" name="user_medicationstatement_r" checked> read
 	<% } else { %>
 								<input type="checkbox" id="user_medicationstatement_r" name="user_medicationstatement_r"> read
+	<% } %>&nbsp;&nbsp;
+	<% if (scope.contains("user/MedicationStatement.write")) { %>
+								<input type="checkbox" id="user_medicationstatement_w" name="user_medicationstatement_w" checked> write
+	<% } else { %>
+								<input type="checkbox" id="user_medicationstatement_w" name="user_medicationstatement_w"> write
 	<% } %>
 							</td>
 						</tr>
@@ -93,6 +113,11 @@
 								<input type="checkbox" id="user_medicationrequest_r" name="user_medicationrequest_r" checked> read
 	<% } else { %>
 								<input type="checkbox" id="user_medicationrequest_r" name="user_medicationrequest_r"> read
+	<% } %>&nbsp;&nbsp;
+	<% if (scope.contains("user/MedicationRequest.write")) { %>
+								<input type="checkbox" id="user_medicationrequest_w" name="user_medicationrequest_w" checked> write
+	<% } else { %>
+								<input type="checkbox" id="user_medicationrequest_w" name="user_medicationrequest_w"> write
 	<% } %>
 							</td>
 						</tr>
@@ -103,6 +128,11 @@
 								<input type="checkbox" id="user_observation_r" name="user_observation_r" checked> read
 	<% } else { %>
 								<input type="checkbox" id="user_observation_r" name="user_observation_r"> read
+	<% } %>&nbsp;&nbsp;
+	<% if (scope.contains("user/Observation.write")) { %>
+								<input type="checkbox" id="user_observation_w" name="user_observation_w" checked> write
+	<% } else { %>
+								<input type="checkbox" id="user_observation_w" name="user_observation_w"> write
 	<% } %>
 							</td>
 						</tr>
@@ -113,6 +143,11 @@
 								<input type="checkbox" id="user_patient_r" name="user_patient_r" checked> read
 	<% } else { %>
 								<input type="checkbox" id="user_patient_r" name="user_patient_r"> read
+	<% } %>&nbsp;&nbsp;
+	<% if (scope.contains("user/Patient.write")) { %>
+								<input type="checkbox" id="user_patient_w" name="user_patient_w" checked> write
+	<% } else { %>
+								<input type="checkbox" id="user_patient_w" name="user_patient_w"> write
 	<% } %>
 							</td>
 						</tr>
@@ -123,6 +158,11 @@
 								<input type="checkbox" id="user_procedure_r" name="user_procedure_r" checked> read
 	<% } else { %>
 								<input type="checkbox" id="user_procedure_r" name="user_procedure_r"> read
+	<% } %>&nbsp;&nbsp;
+	<% if (scope.contains("user/Procedure.write")) { %>
+								<input type="checkbox" id="user_procedure_w" name="user_procedure_w" checked> write
+	<% } else { %>
+								<input type="checkbox" id="user_procedure_w" name="user_procedure_w"> write
 	<% } %>
 							</td>
 						</tr>
@@ -140,6 +180,11 @@
 								<input type="checkbox" id="patient_condition_r" name="patient_condition_r" checked> read
 	<% } else { %>
 								<input type="checkbox" id="patient_condition_r" name="patient_condition_r"> read
+	<% } %>&nbsp;&nbsp;
+	<% if (scope.contains("patient/Condition.write")) { %>
+								<input type="checkbox" id="patient_condition_w" name="patient_condition_w" checked> write
+	<% } else { %>
+								<input type="checkbox" id="patient_condition_w" name="patient_condition_w"> write
 	<% } %>
 							</td>
 						</tr>
@@ -150,6 +195,11 @@
 								<input type="checkbox" id="patient_documentreference_r" name="patient_documentreference_r" checked> read
 	<% } else { %>
 								<input type="checkbox" id="patient_documentreference_r" name="patient_documentreference_r"> read
+	<% } %>&nbsp;&nbsp;
+	<% if (scope.contains("patient/DocumentReference.write")) { %>
+								<input type="checkbox" id="patient_documentreference_w" name="patient_documentreference_w" checked> write
+	<% } else { %>
+								<input type="checkbox" id="patient_documentreference_w" name="patient_documentreference_w"> write
 	<% } %>
 							</td>
 						</tr>
@@ -160,6 +210,11 @@
 								<input type="checkbox" id="patient_encounter_r" name="patient_encounter_r" checked> read
 	<% } else { %>
 								<input type="checkbox" id="patient_encounter_r" name="patient_encounter_r"> read
+	<% } %>&nbsp;&nbsp;
+	<% if (scope.contains("patient/Encounter.write")) { %>
+								<input type="checkbox" id="patient_encounter_w" name="patient_encounter_w" checked> write
+	<% } else { %>
+								<input type="checkbox" id="patient_encounter_w" name="patient_encounter_w"> write
 	<% } %>
 							</td>
 						</tr>
@@ -170,6 +225,11 @@
 								<input type="checkbox" id="patient_medicationstatement_r" name="patient_medicationstatement_r" checked> read
 	<% } else { %>
 								<input type="checkbox" id="patient_medicationstatement_r" name="patient_medicationstatement_r"> read
+	<% } %>&nbsp;&nbsp;
+	<% if (scope.contains("patient/MedicationStatement.write")) { %>
+								<input type="checkbox" id="patient_medicationstatement_w" name="patient_medicationstatement_w" checked> write
+	<% } else { %>
+								<input type="checkbox" id="patient_medicationstatement_w" name="patient_medicationstatement_w"> write
 	<% } %>
 							</td>
 						</tr>
@@ -180,6 +240,11 @@
 								<input type="checkbox" id="patient_medicationrequest_r" name="patient_medicationrequest_r" checked> read
 	<% } else { %>
 								<input type="checkbox" id="patient_medicationrequest_r" name="patient_medicationrequest_r"> read
+	<% } %>&nbsp;&nbsp;
+	<% if (scope.contains("patient/MedicationRequest.write")) { %>
+								<input type="checkbox" id="patient_medicationrequest_w" name="patient_medicationrequest_w" checked> write
+	<% } else { %>
+								<input type="checkbox" id="patient_medicationrequest_w" name="patient_medicationrequest_w"> write
 	<% } %>
 							</td>
 						</tr>
@@ -190,6 +255,11 @@
 								<input type="checkbox" id="patient_observation_r" name="patient_observation_r" checked> read
 	<% } else { %>
 								<input type="checkbox" id="patient_observation_r" name="patient_observation_r"> read
+	<% } %>&nbsp;&nbsp;
+	<% if (scope.contains("patient/Observation.write")) { %>
+								<input type="checkbox" id="patient_observation_w" name="patient_observation_w" checked> write
+	<% } else { %>
+								<input type="checkbox" id="patient_observation_w" name="patient_observation_w"> write
 	<% } %>
 							</td>
 						</tr>
@@ -200,6 +270,11 @@
 								<input type="checkbox" id="patient_patient_r" name="patient_patient_r" checked> read
 	<% } else { %>
 								<input type="checkbox" id="patient_patient_r" name="patient_patient_r"> read
+	<% } %>&nbsp;&nbsp;
+	<% if (scope.contains("patient/Patient.write")) { %>
+								<input type="checkbox" id="patient_patient_w" name="patient_patient_w" checked> write
+	<% } else { %>
+								<input type="checkbox" id="patient_patient_w" name="patient_patient_w"> write
 	<% } %>
 							</td>
 						</tr>
@@ -210,6 +285,11 @@
 								<input type="checkbox" id="patient_procedure_r" name="patient_procedure_r" checked> read
 	<% } else { %>
 								<input type="checkbox" id="patient_procedure_r" name="patient_procedure_r"> read
+	<% } %>&nbsp;&nbsp;
+	<% if (scope.contains("patient/Procedure.write")) { %>
+								<input type="checkbox" id="patient_procedure_w" name="patient_procedure_w" checked> write
+	<% } else { %>
+								<input type="checkbox" id="patient_procedure_w" name="patient_procedure_w"> write
 	<% } %>
 							</td>
 						</tr>

@@ -47,14 +47,6 @@
 		<servlet-name>SmartAuthServices</servlet-name>
 		<servlet-class>org.springframework.web.servlet.DispatcherServlet
 		</servlet-class>
-		<init-param>
-			<param-name>client_id</param-name>
-			<param-value>client_omop</param-value>
-		</init-param>
-		<init-param>
-			<param-name>client_secret</param-name>
-			<param-value>secret</param-value>
-		</init-param>
 		<load-on-startup>3</load-on-startup>
 	</servlet>
 	<servlet-mapping>
@@ -89,20 +81,6 @@
 			<param-name>introspectUrl</param-name>
 			<param-value>http://localhost:8080/introspect</param-value>
 		</init-param>
-		<init-param>
-			<param-name>authType</param-name>
-			<param-value>None</param-value>
-		</init-param>
-		<init-param>
-			<param-name>clientId</param-name>
-			<param-value>client_omop</param-value>
-		</init-param>
-		<init-param>
-			<param-name>clientSecret</param-name>
-			<param-value>secret</param-value>
-		</init-param>
-		<!-- <init-param> <param-name>localByPass</param-name> <param-value>True</param-value> 
-			</init-param> -->
 		<init-param>
 			<param-name>readOnly</param-name>
 			<param-value>True</param-value>

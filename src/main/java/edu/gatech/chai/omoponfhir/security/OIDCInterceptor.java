@@ -39,18 +39,42 @@ public class OIDCInterceptor extends InterceptorAdapter {
 
 	private static final org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger(OIDCInterceptor.class);
 
-	private String authType;
 	private String introspectUrl;
-	private String clientId;
-	private String clientSecret;
-//	private String localByPass;
 	private String readOnly;
+	private String authBasic;
+	private String authBearer;
 
 	private static String authKeyName = "smartOnFhirAuth";
 
 	public OIDCInterceptor() {
-		authType = "None"; // Default allows anonymous access
-		introspectUrl = "http://localhost:8080/introspect";
+		String url = System.getenv("SMART_INTROSPECTURL");
+		if (url != null && !url.isEmpty()) {
+			introspectUrl = url;
+		} else {
+			introspectUrl = "http://localhost:8080/introspect";
+		}
+		
+		// check environment variables now as they may have been updated.
+		String readOnlyEnv = System.getenv("FHIR_READONLY");
+		if (readOnlyEnv != null && !readOnlyEnv.isEmpty()) {
+			setReadOnly(readOnlyEnv);
+		} else {
+			setReadOnly("True");
+		}
+
+		String authBasicEnv = System.getenv("AUTH_BASIC");
+		if (authBasicEnv != null && !authBasicEnv.isEmpty()) {
+			setAuthBasic(authBasicEnv);
+		} else {
+			setAuthBasic("client_omop:secret");
+		}
+
+		String authBearerEnv = System.getenv("AUTH_BEARER");
+		if (authBearerEnv != null && !authBearerEnv.isEmpty()) {
+			setAuthBearer(authBearerEnv);
+		} else {
+			setAuthBearer("12345");
+		}
 	}
 
 	@Override
@@ -58,25 +82,6 @@ public class OIDCInterceptor extends InterceptorAdapter {
 			HttpServletResponse theResponse) throws AuthenticationException {
 
 		ourLog.debug("[OAuth] Request from " + theRequest.getRemoteAddr());
-
-		// check environment variables now as they may have been updated.
-		String readOnlyEnv = System.getenv("FHIR_READONLY");
-		if (readOnlyEnv != null && !readOnlyEnv.isEmpty()) {
-			setReadOnly(readOnlyEnv);
-		}
-
-		String authTypeEnv = System.getenv("AUTH_TYPE");
-		if (authTypeEnv != null && !authTypeEnv.isEmpty()) {
-			setAuthType(authTypeEnv);
-		} else {
-			setAuthType("None");
-		}
-
-//		String localByPassEnv = System.getenv("LOCAL_BYPASS");
-//		if (localByPassEnv != null && !localByPassEnv.isEmpty()) {
-//			setLocalByPass(localByPassEnv);
-//		}
-
 		if (readOnly.equalsIgnoreCase("True")) {
 			if (!theRequest.getMethod().equalsIgnoreCase("GET")) {
 				RequestTypeEnum[] allowedMethod = new RequestTypeEnum[] { RequestTypeEnum.GET };
@@ -145,36 +150,34 @@ public class OIDCInterceptor extends InterceptorAdapter {
 //			}
 //		}
 
-		if (authType.equalsIgnoreCase("None")) {
-			ourLog.debug("[OAuth] OAuth is disabled. Request from " + theRequest.getRemoteAddr() + "is approved");
-			return true;
+//		if (authBasic.equalsIgnoreCase("None")) {
+//			ourLog.debug("[OAuth] OAuth is disabled. Request from " + theRequest.getRemoteAddr() + "is approved");
+//			return true;
+//		}
+
+		String authHeader = theRequest.getHeader("Authorization");
+		if (authHeader == null || authHeader.isEmpty() || authHeader.length() < 6) {
+			if ("None".equals(getAuthBasic()) && "None".equals(getAuthBearer())) {
+				// We turned of the authorization.
+				return true;
+			}
+			
+			AuthenticationException ex = new AuthenticationException("No or Invalid Authorization Header");
+			ex.addAuthenticateHeaderForRealm("OmopOnFhir");
+			throw ex;
 		}
 
-		if (authType.startsWith("Basic ")) {
-			String[] basicCredential = authType.substring(6).split(":");
+		// Check if basic auth.
+		String prefix = authHeader.substring(0, 6);
+		if ("basic ".equalsIgnoreCase(prefix)) {
+			String[] basicCredential = authBasic.split(":");
 			if (basicCredential.length != 2) {
-
 				AuthenticationException ex = new AuthenticationException("Basic Authorization Setup Incorrectly");
 				ex.addAuthenticateHeaderForRealm("OmopOnFhir");
 				throw ex;
 			}
 			String username = basicCredential[0];
 			String password = basicCredential[1];
-
-			String authHeader = theRequest.getHeader("Authorization");
-			if (authHeader == null || authHeader.isEmpty() || authHeader.length() < 6) {
-				AuthenticationException ex = new AuthenticationException("No or Invalid Basic Authorization Header");
-				ex.addAuthenticateHeaderForRealm("OmopOnFhir");
-				throw ex;
-			}
-
-			// Check if basic auth.
-			String prefix = authHeader.substring(0, 6);
-			if (!"basic ".equalsIgnoreCase(prefix)) {
-				AuthenticationException ex = new AuthenticationException("Invalid Basic Authorization Header");
-				ex.addAuthenticateHeaderForRealm("OmopOnFhir");
-				throw ex;
-			}
 
 			String base64 = authHeader.substring(6);
 
@@ -189,11 +192,10 @@ public class OIDCInterceptor extends InterceptorAdapter {
 			AuthenticationException ex = new AuthenticationException("Incorrect Username and Password");
 			ex.addAuthenticateHeaderForRealm("OmopOnFhir");
 			throw ex;
-		} else {
+		} else if ("bearer".equalsIgnoreCase(prefix)) {
 			// checking Auth
-			ourLog.debug("IntrospectURL:" + getIntrospectUrl() + " clientID:" + getClientId() + " clientSecret:"
-					+ getClientSecret());
-			Authorization myAuth = new Authorization(getIntrospectUrl(), getClientId(), getClientSecret());
+			ourLog.debug("IntrospectURL:" + getIntrospectUrl() + " with Basic " + getAuthBasic());
+			Authorization myAuth = new Authorization(getIntrospectUrl(), getAuthBasic());
 
 			String err_msg = myAuth.introspectToken(theRequest);
 			if (err_msg.isEmpty() == false) {
@@ -215,6 +217,10 @@ public class OIDCInterceptor extends InterceptorAdapter {
 
 			return true;
 //			return myAuth.allowRequest(theRequestDetails);				
+		} else {
+			AuthenticationException ex = new AuthenticationException("No Valid Authorization Header Found");
+			ex.addAuthenticateHeaderForRealm("OmopOnFhir");
+			throw ex;
 		}
 
 		// for test.
@@ -246,12 +252,20 @@ public class OIDCInterceptor extends InterceptorAdapter {
 		}
 	}
 
-	public String getAuthType() {
-		return authType;
+	public String getAuthBasic() {
+		return authBasic;
 	}
 
-	public void setAuthType(String authType) {
-		this.authType = authType;
+	public void setAuthBasic(String authBasic) {
+		this.authBasic = authBasic;
+	}
+
+	public String getAuthBearer() {
+		return authBearer;
+	}
+
+	public void setAuthBearer(String authBearer) {
+		this.authBearer = authBearer;
 	}
 
 	public String getIntrospectUrl() {
@@ -260,22 +274,6 @@ public class OIDCInterceptor extends InterceptorAdapter {
 
 	public void setIntrospectUrl(String introspectURL) {
 		this.introspectUrl = introspectURL;
-	}
-
-	public String getClientId() {
-		return clientId;
-	}
-
-	public void setClientId(String clientId) {
-		this.clientId = clientId;
-	}
-
-	public String getClientSecret() {
-		return clientSecret;
-	}
-
-	public void setClientSecret(String clientSecret) {
-		this.clientSecret = clientSecret;
 	}
 
 //	public String getLocalByPass() {
