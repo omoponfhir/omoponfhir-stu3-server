@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 import javax.crypto.spec.SecretKeySpec;
+import javax.servlet.http.HttpServletRequest;
 //import javax.servlet.annotation.WebServlet;
 import javax.xml.bind.DatatypeConverter;
 
@@ -71,8 +72,7 @@ public class SmartAuthServicesController {
 	private static final long serialVersionUID = 1L;
 	final static Logger logger = LoggerFactory.getLogger(SmartAuthServicesController.class);
 
-	private String client_id;
-	private String client_secret;
+	private String authBasic;
 	private String jwtSecret;
 	private String smartStyleUrl;
 	private boolean simEhr;
@@ -103,13 +103,10 @@ public class SmartAuthServicesController {
 			}
 		}
 
-		client_id = System.getenv("SMART_CLIENTID");
-		client_secret = System.getenv("SMART_CLIENTSECRET");
+		authBasic = System.getenv("AUTH_BASIC");
 
-		if (client_id == null)
-			client_id = "client_id";
-		if (client_secret == null)
-			client_secret = "client_secret";
+		if (authBasic == null)
+			authBasic = "client:secret";
 
 		jwtSecret = System.getenv("JWT_SECRET");
 		if (jwtSecret == null) {
@@ -521,9 +518,27 @@ public class SmartAuthServicesController {
 	}
 
 	@PostMapping(value = "/introspect")
-	public ResponseEntity<IntrospectResponse> introspect(@RequestParam(name = "token", required = true) String token,
+	public ResponseEntity<IntrospectResponse> introspect(HttpServletRequest request, @RequestParam(name = "token", required = true) String token,
 			Model model) {
+		
+		// Check Basic authentication.
+		String authReq = request.getHeader("Authorization");
+		if (authReq == null || authReq.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No Authorization Header");
+		}
+		
 		IntrospectResponse introspectResponse = null;
+		if (authReq.startsWith("Basic ") || authReq.startsWith("basic ")) {
+			String basicKey = authReq.substring(6);
+			String base64decoded = new String(Base64.decodeBase64(basicKey));
+			if (!authBasic.equals(base64decoded)) {
+				logger.info("Basic Authorization Failed: "+base64decoded+" requested");
+				throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Basic Authorization Failed");
+			}
+		} else {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Authorization Header");
+		}
+
 		Long now = (new Date()).getTime();
 
 		String authBearer = System.getenv("AUTH_BEARER");
