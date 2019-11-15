@@ -617,7 +617,7 @@ public class SmartAuthServicesController {
 		SmartOnFhirSessionEntry sessionEntry = null;
 		List<SmartOnFhirSessionEntry> smartSessions = smartOnFhirSession.getSmartOnFhirSessionsByAppId(clientId);
 		for (SmartOnFhirSessionEntry entry : smartSessions) {
-			if (entry.getAccessToken().equals(clientId)) {
+			if (entry.getAccessToken() != null && entry.getAccessToken().equals(clientId)) {
 				String patientInCode = getPatientIdFromJWT(entry.getAuthorizationCode());
 				String patientInContext = getPatientFromLaunchContext(launchContext);
 				if (patientInCode != null && !patientInCode.isEmpty() && patientInContext != null
