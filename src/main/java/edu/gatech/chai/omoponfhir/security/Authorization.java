@@ -81,7 +81,7 @@ public class Authorization {
 	public String getAuthBasic() {
 		return authBasic;
 	}
-	
+
 	public void setAuthBasic(String authBasic) {
 		this.authBasic = authBasic;
 	}
@@ -148,11 +148,11 @@ public class Authorization {
 		response = restTemplate.exchange(introspectTokenUrl, HttpMethod.POST, reqAuth, String.class);
 		HttpStatus statusCode = response.getStatusCode();
 		if (statusCode.is2xxSuccessful() == false) {
-			logger.debug("Introspect (token:"+token+") response with statusCode:" + statusCode.toString());
+			logger.debug("Introspect (token:" + token + ") response with statusCode:" + statusCode.toString());
 			return false;
 		}
 
-		System.out.println("IntrospectToken: " + response.getBody() + ", token: "+token);
+		System.out.println("IntrospectToken: " + response.getBody() + ", token: " + token);
 
 		// First check the token status. Turn the body into JSON.
 		JSONObject jsonObject = new JSONObject(response.getBody());
@@ -195,7 +195,7 @@ public class Authorization {
 //			}
 		}
 		// Store the received information such as scope, user_id, client_id, etc...
-		String userId = null; 
+		String userId = null;
 		if (jsonObject.has("sub"))
 			userId = jsonObject.getString("sub"); // current found no need to use this.
 		if (jsonObject.has("token_type"))
@@ -280,19 +280,41 @@ public class Authorization {
 				continue;
 
 			String[] scopeDetail = scope.split("/");
-			logger.debug("checking scope:" + scope + " scopeDetail[0]=" + scopeDetail[0]);
+			logger.debug("Requesting resource: " + resourceName + ". checking scope:" + scope + " scopeDetail[0]="
+					+ scopeDetail[0]);
 			if ("patient".equals(scopeDetail[0])) {
 				if (patient == null || patient.isEmpty())
 					continue;
 
 				boolean found = false;
 				if ("Patient".equals(resourceName)) {
-					logger.debug("retrieving Patient by client. This scoped is bound to patient_id:" + patient
-							+ " and received patient:" + theRequestDetails.getId().getIdPart());
-					if (!patient.equals(theRequestDetails.getId().getIdPart())) {
-						continue;
+					if (theRequestDetails.getId() != null && theRequestDetails.getId().getIdPart() != null
+							&& !theRequestDetails.getId().getIdPart().isEmpty()) {
+						String patientIdInRequest = theRequestDetails.getId().getIdPart();
+						logger.debug("retrieving Patient by client. This scoped is bound to patient_id:" + patient
+								+ " and received patient:" + patientIdInRequest);
+						if (!patient.equals(theRequestDetails.getId().getIdPart())) {
+							continue;
+						} else {
+							found = true;
+						}
 					} else {
-						found = true;
+						Map<String, String[]> reqParam = theRequestDetails.getParameters();
+						String[] patientIds = reqParam.get("_id");
+						if (patientIds == null || patientIds.length == 0) {
+							patientIds = reqParam.get("id");
+						}
+
+						if (patientIds != null && patientIds.length > 0) {
+							for (String patientId : patientIds) {
+								logger.debug("retrieving Patient by client. This scoped is bound to patient_id:"
+										+ patient + " and received patient (id= or _id=):" + patientId);
+								if (patient.equals(patientId)) {
+									found = true;
+									break;
+								}
+							}
+						}
 					}
 				} else {
 					// Trying to get a resource other than Patient. Check if we have
