@@ -31,6 +31,7 @@ import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.UriType;
 
+import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.RestfulServer;
 
 /**
@@ -74,8 +75,8 @@ public class SMARTonFHIRConformanceStatement extends ServerCapabilityStatementPr
 	}
 
 	@Override
-	public CapabilityStatement getServerConformance(HttpServletRequest theRequest) {
-		CapabilityStatement conformanceStatement = super.getServerConformance(theRequest);
+	public CapabilityStatement getServerConformance(HttpServletRequest theRequest, RequestDetails theRequestDetails) {
+		CapabilityStatement conformanceStatement = super.getServerConformance(theRequest, theRequestDetails);
 		CapabilityStatementRestSecurityComponent restSec = new CapabilityStatementRestSecurityComponent();
 
 		// Set security.service
