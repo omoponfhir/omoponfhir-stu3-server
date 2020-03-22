@@ -47,7 +47,7 @@
 		<!-- Dependency Versions -->
 		<derby_version>10.14.2.0</derby_version>
 		<jersey_version>2.25.1</jersey_version>
-		<jetty_version>9.4.23.v20191118</jetty_version>
+		<jetty_version>9.4.27.v20200227</jetty_version>
 
 		<jackson_version>2.10.0</jackson_version>
 		<jackson_databind_version>2.10.0</jackson_databind_version>
@@ -126,11 +126,6 @@
 		</dependency>
 
 		<!-- Needed for JEE/Servlet support -->
-		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>javax.servlet-api</artifactId>
-			<version>3.1.0</version>
-		</dependency>
 
 		<!-- If you are using HAPI narrative generation, you will need to include 
 			Thymeleaf as well. Otherwise the following can be omitted. -->
@@ -281,6 +276,10 @@
 					<groupId>commons-logging</groupId>
 					<artifactId>commons-logging</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>javax.servlet</groupId>
+					<artifactId>javax.servlet-api</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 
@@ -368,6 +367,12 @@
 			<groupId>org.eclipse.jetty.websocket</groupId>
 			<artifactId>websocket-server</artifactId>
 			<version>${jetty_version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>javax.servlet</groupId>
+					<artifactId>javax.servlet-api</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
