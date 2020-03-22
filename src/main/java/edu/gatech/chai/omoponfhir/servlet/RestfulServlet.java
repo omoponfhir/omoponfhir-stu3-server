@@ -57,7 +57,7 @@ public class RestfulServlet extends RestfulServer {
 	@Override
 	public void initialize() {
 		// Set server name
-		setServerName("GT-FHIR2 for OMOPv5");
+		setServerName("OMOPonFHIR (OMOPv5/FHIR STU3)");
 
 		// If we have system environment variable to hardcode the base URL, do it now.
 		String serverBaseUrl = System.getenv("SERVERBASE_URL");
@@ -146,6 +146,7 @@ public class RestfulServlet extends RestfulServer {
 		String authServerUrl = System.getenv("SMART_AUTHSERVERURL");
 		String tokenServerUrl = System.getenv("SMART_TOKENSERVERURL");
 
+		// CapabilityStatement must be loaded after providers.
 		SMARTonFHIRConformanceStatement capbilityProvider = new SMARTonFHIRConformanceStatement(this);
 		capbilityProvider.setPublisher("Georgia Tech - I3L");
 

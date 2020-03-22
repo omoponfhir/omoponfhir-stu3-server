@@ -19,20 +19,25 @@
 package edu.gatech.chai.omoponfhir.stu3.security;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.hl7.fhir.dstu3.hapi.rest.server.ServerCapabilityStatementProvider;
 import org.hl7.fhir.dstu3.model.CapabilityStatement;
 import org.hl7.fhir.dstu3.model.CapabilityStatement.CapabilityStatementRestComponent;
+import org.hl7.fhir.dstu3.model.CapabilityStatement.CapabilityStatementRestResourceComponent;
 import org.hl7.fhir.dstu3.model.CapabilityStatement.CapabilityStatementRestSecurityComponent;
 import org.hl7.fhir.dstu3.model.CodeableConcept;
 import org.hl7.fhir.dstu3.model.Coding;
+import org.hl7.fhir.dstu3.model.DecimalType;
 import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.UriType;
 
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.RestfulServer;
+import ca.uhn.fhir.util.ExtensionConstants;
+import edu.gatech.chai.omoponfhir.omopv5.stu3.utilities.ExtensionUtil;
 
 /**
  * @author mc142local
@@ -56,8 +61,8 @@ public class SMARTonFHIRConformanceStatement extends ServerCapabilityStatementPr
 	String tokenURIvalue = "http://localhost:8080/token";
 
 	public SMARTonFHIRConformanceStatement(RestfulServer theRestfulServer) {
-		super(theRestfulServer);
-		setCache(false);
+//		super(theRestfulServer);
+//		setCache(false);
 
 //		try {
 //			InetAddress addr = java.net.InetAddress.getLocalHost();
@@ -77,60 +82,74 @@ public class SMARTonFHIRConformanceStatement extends ServerCapabilityStatementPr
 	@Override
 	public CapabilityStatement getServerConformance(HttpServletRequest theRequest, RequestDetails theRequestDetails) {
 		CapabilityStatement conformanceStatement = super.getServerConformance(theRequest, theRequestDetails);
-		CapabilityStatementRestSecurityComponent restSec = new CapabilityStatementRestSecurityComponent();
 
-		// Set security.service
-		CodeableConcept codeableConcept = new CodeableConcept();
-		Coding coding = new Coding("https://www.hl7.org/fhir/codesystem-restful-security-service.html", "SMART-on-FHIR",
-				"SMART-on-FHIR");
-		codeableConcept.addCoding(coding);
+		Map<String, Long> counts = ExtensionUtil.getResourceCounts();
 
-		restSec.addService(codeableConcept);
+		for (CapabilityStatementRestComponent rest : conformanceStatement.getRest()) {
+			for (CapabilityStatementRestResourceComponent nextResource : rest.getResource()) {
+				Long count = counts.get(nextResource.getTypeElement().getValueAsString());
+				if (count != null) {
+					nextResource.addExtension(
+							new Extension(ExtensionConstants.CONF_RESOURCE_COUNT, new DecimalType(count)));
+				}
+			}
 
-		// We need to add SMART on FHIR required conformance statement.
-		
-		Extension secExtension = new Extension();
-		secExtension.setUrl(oauthURI);
+			CapabilityStatementRestSecurityComponent restSec = new CapabilityStatementRestSecurityComponent();
 
-		Extension authorizeExtension = new Extension();
-		authorizeExtension.setUrl(authorizeURI);
-		authorizeExtension.setValue(new UriType(authorizeURIvalue));
+			// Set security.service
+			CodeableConcept codeableConcept = new CodeableConcept();
+			Coding coding = new Coding("https://www.hl7.org/fhir/codesystem-restful-security-service.html",
+					"SMART-on-FHIR", "SMART-on-FHIR");
+			codeableConcept.addCoding(coding);
 
-		Extension tokenExtension = new Extension();
-		tokenExtension.setUrl(tokenURI);
-		tokenExtension.setValue(new UriType(tokenURIvalue));
+			restSec.addService(codeableConcept);
+
+			// We need to add SMART on FHIR required conformance statement.
+
+			Extension secExtension = new Extension();
+			secExtension.setUrl(oauthURI);
+
+			Extension authorizeExtension = new Extension();
+			authorizeExtension.setUrl(authorizeURI);
+			authorizeExtension.setValue(new UriType(authorizeURIvalue));
+
+			Extension tokenExtension = new Extension();
+			tokenExtension.setUrl(tokenURI);
+			tokenExtension.setValue(new UriType(tokenURIvalue));
 
 //		Extension registerExtension = new Extension();
 //		registerExtension.setUrl(registerURI);
 //		registerExtension.setValue(new UriType(registerURIvalue));
 
-		secExtension.addExtension(authorizeExtension);
-		secExtension.addExtension(tokenExtension);
+			secExtension.addExtension(authorizeExtension);
+			secExtension.addExtension(tokenExtension);
 //		secExtension.addExtension(registerExtension);
 
-		restSec.addExtension(secExtension);
+			restSec.addExtension(secExtension);
 
-		// restSec.addUndeclaredExtension(authorizeExtension);
-		// restSec.addUndeclaredExtension(tokenExtension);
-		// restSec.addUndeclaredExtension(registerExtension);
+			// restSec.addUndeclaredExtension(authorizeExtension);
+			// restSec.addUndeclaredExtension(tokenExtension);
+			// restSec.addUndeclaredExtension(registerExtension);
 
-		List<CapabilityStatementRestComponent> rests = conformanceStatement.getRest();
-		if (rests == null || rests.size() <= 0) {
-			CapabilityStatementRestComponent rest = new CapabilityStatementRestComponent();
 			rest.setSecurity(restSec);
-			conformanceStatement.addRest(rest);
-		} else {
-			CapabilityStatementRestComponent rest = rests.get(0);
-			rest.setSecurity(restSec);
+
+//		List<CapabilityStatementRestComponent> rests = conformanceStatement.getRest();
+//		if (rests == null || rests.size() <= 0) {
+//			CapabilityStatementRestComponent rest = new CapabilityStatementRestComponent();
+//			rest.setSecurity(restSec);
+//			conformanceStatement.addRest(rest);
+//		} else {
+//			CapabilityStatementRestComponent rest = rests.get(0);
+//			rest.setSecurity(restSec);
+//		}
 		}
-
 		return conformanceStatement;
 	}
 
 	public void setAuthServerUrl(String url) {
 		authorizeURIvalue = url;
 	}
-	
+
 	public void setTokenServerUrl(String url) {
 		tokenURIvalue = url;
 	}

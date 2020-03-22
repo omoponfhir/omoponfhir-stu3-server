@@ -71,7 +71,7 @@
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>spring</servlet-name>
-		<url-pattern>/tester/*</url-pattern>
+		<url-pattern>/</url-pattern>
 	</servlet-mapping>
 	<servlet>
 		<servlet-name>fhirServlet</servlet-name>
