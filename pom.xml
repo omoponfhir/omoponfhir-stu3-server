@@ -49,6 +49,11 @@
 		<jersey_version>2.25.1</jersey_version>
 		<jetty_version>9.4.27.v20200227</jetty_version>
 
+		<hibernate_version>5.4.6.Final</hibernate_version>
+		<hibernate_validator_version>5.4.2.Final</hibernate_validator_version>
+		<!-- Update lucene version when you update hibernate-search version -->
+		<hibernate_search_version>5.11.3.Final</hibernate_search_version>
+
 		<jackson_version>2.10.0</jackson_version>
 		<jackson_databind_version>2.10.0</jackson_databind_version>
 		<jaxb_api_version>2.3.1</jaxb_api_version>
@@ -57,7 +62,11 @@
 		<maven_license_plugin_version>1.8</maven_license_plugin_version>
 		<phloc_schematron_version>5.2.0</phloc_schematron_version>
 		<phloc_commons_version>9.3.8</phloc_commons_version>
+		
 		<spring_version>5.2.3.RELEASE</spring_version>
+		<spring_data_version>2.2.0.RELEASE</spring_data_version>
+		<spring-boot.version>2.2.0.RELEASE</spring-boot.version>
+		
 		<thymeleaf-version>3.0.11.RELEASE</thymeleaf-version>
 
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -126,6 +135,16 @@
 		</dependency>
 
 		<!-- Needed for JEE/Servlet support -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.annotation</groupId>
+			<artifactId>javax.annotation-api</artifactId>
+			<version>1.3.2</version>
+		</dependency>
 
 		<!-- If you are using HAPI narrative generation, you will need to include 
 			Thymeleaf as well. Otherwise the following can be omitted. -->
@@ -190,12 +209,11 @@
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-core</artifactId>
 			<version>${spring_version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.springframework</groupId>
-					<artifactId>spring-jcl</artifactId>
-				</exclusion>
-			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-jpa</artifactId>
+			<version>${spring_data_version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -214,8 +232,61 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
+			<artifactId>spring-tx</artifactId>
+			<version>${spring_version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
 			<artifactId>spring-websocket</artifactId>
 			<version>${spring_version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-dbcp2</artifactId>
+			<version>2.6.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>42.2.6</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-core</artifactId>
+			<version>${hibernate_version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-ehcache</artifactId>
+			<version>${hibernate_version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-entitymanager</artifactId>
+			<version>${hibernate_version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-validator</artifactId>
+			<version>${hibernate_validator_version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-search-orm</artifactId>
+			<version>${hibernate_search_version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-envers</artifactId>
+			<version>${hibernate_version}</version>
 		</dependency>
 
 		<!-- webjars -->
@@ -271,16 +342,6 @@
 			<groupId>edu.gatech.chai</groupId>
 			<artifactId>omoponfhir-omopv5-stu3-mapping</artifactId>
 			<version>${omoponfhir_mapping_version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>commons-logging</groupId>
-					<artifactId>commons-logging</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>javax.servlet</groupId>
-					<artifactId>javax.servlet-api</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<dependency>
@@ -308,12 +369,6 @@
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
 			<version>4.5</version>
-			<exclusions>
-				<exclusion>
-					<groupId>commons-logging</groupId>
-					<artifactId>commons-logging</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/caffeine -->
@@ -367,12 +422,6 @@
 			<groupId>org.eclipse.jetty.websocket</groupId>
 			<artifactId>websocket-server</artifactId>
 			<version>${jetty_version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>javax.servlet</groupId>
-					<artifactId>javax.servlet-api</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<dependency>
@@ -394,42 +443,19 @@
 		<!-- Tells Maven to name the generated WAR file as restful-server-example.war -->
 		<finalName>omoponfhir-stu3-server</finalName>
 
+		<!-- The following is not required for the application to build, but allows 
+			you to test it by issuing "mvn jetty:run" from the command line. -->
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-maven-plugin</artifactId>
+					<version>${jetty_version}</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+
 		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-enforcer-plugin</artifactId>
-				<version>3.0.0-M3</version>
-				<executions>
-					<execution>
-						<id>enforce-maven</id>
-						<goals>
-							<goal>enforce</goal>
-						</goals>
-						<configuration>
-							<rules>
-								<requireMavenVersion>
-									<version>3.0</version>
-								</requireMavenVersion>
-							</rules>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-
-			<!-- The following is not required for the application to build, but allows 
-				you to test it by issuing "mvn jetty:run" from the command line. -->
-			<plugin>
-				<groupId>org.eclipse.jetty</groupId>
-				<artifactId>jetty-maven-plugin</artifactId>
-				<version>${jetty_version}</version>
-				<configuration>
-					<webApp>
-						<contextPath>/</contextPath>
-						<allowDuplicateFragmentNames>true</allowDuplicateFragmentNames>
-					</webApp>
-				</configuration>
-			</plugin>
-
 			<!-- Tell Maven which Java source version you want to use -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -463,6 +489,15 @@
 				</configuration>
 			</plugin>
 
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<version>3.0.0-M1</version>
+				<configuration>
+					<skip>false</skip>
+				</configuration>
+			</plugin>
+
 			<!-- This is to run the integration tests -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -479,30 +514,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-
-			<plugin>
-				<groupId>org.basepom.maven</groupId>
-				<artifactId>duplicate-finder-maven-plugin</artifactId>
-				<version>1.3.0</version>
-				<executions>
-					<execution>
-						<id>default</id>
-						<phase>verify</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-						<inherited>true</inherited>
-					</execution>
-				</executions>
-				<configuration>
-					<failBuildInCaseOfConflict>true</failBuildInCaseOfConflict>
-					<checkTestClasspath>false</checkTestClasspath>
-					<ignoredResourcePatterns>
-						<ignoredResourcePattern>.*\.txt$</ignoredResourcePattern>
-						<ignoredResourcePattern>.*\.html$</ignoredResourcePattern>
-					</ignoredResourcePatterns>
-				</configuration>
 			</plugin>
 
 		</plugins>
