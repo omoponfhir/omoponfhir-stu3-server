@@ -20,10 +20,6 @@
 
 	<name>OMOPonFHIR RESTful Server</name>
 
-	<prerequisites>
-		<maven>3.5.0</maven>
-	</prerequisites>
-
 	<repositories>
 		<repository>
 			<id>oss-snapshots</id>
