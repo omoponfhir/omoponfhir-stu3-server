@@ -48,10 +48,15 @@
 		<servlet-class>org.springframework.web.servlet.DispatcherServlet
 		</servlet-class>
 		<init-param>
-			<param-name>contextConfigLocation</param-name>
-			<param-value>/WEB-INF/SmartAuthServices-servlet.xml</param-value>
+			<param-name>contextClass</param-name>
+			<param-value>org.springframework.web.context.support.AnnotationConfigWebApplicationContext
+			</param-value>
 		</init-param>
-		<load-on-startup>3</load-on-startup>
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>edu.gatech.chai.omoponfhir.config.SmartServerConfig</param-value>
+		</init-param>
+		<load-on-startup>2</load-on-startup>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>SmartAuthServices</servlet-name>
@@ -71,7 +76,7 @@
 			<param-value>edu.gatech.chai.omoponfhir.config.FhirTesterConfig
 			</param-value>
 		</init-param>
-		<load-on-startup>2</load-on-startup>
+		<load-on-startup>3</load-on-startup>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>spring</servlet-name>

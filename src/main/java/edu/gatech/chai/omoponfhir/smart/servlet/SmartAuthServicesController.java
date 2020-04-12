@@ -392,14 +392,15 @@ public class SmartAuthServicesController {
 
 		logger.debug(
 				"Token Requested:\ncode: " + code + "\nredirect_uri:" + redirectUri + "\nclient_id:" + appId + "\n");
-		if (!"authorization_code".equals(grantType) && !"refresh_token".equals(grantType)) {
+		
+		if (!"authorization_code".equals(grantType) && !"refresh_token".equals(grantType) && !"client_credentials".equals(grantType)) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "unsupported_grant_type");
 		}
 
 		Long now = (new Date()).getTime();
 
-		SmartOnFhirAppEntry smartApp;
-		SmartOnFhirSessionEntry smartSession;
+		SmartOnFhirAppEntry smartApp = null;
+		SmartOnFhirSessionEntry smartSession = null;
 		// If this is refresh token request, we handle it differently,
 		if ("refresh_token".equals(grantType)) {
 			// if refresh_token does not exist, we return error.
@@ -438,7 +439,7 @@ public class SmartAuthServicesController {
 //				}
 //			}
 
-		} else {
+		} else if ("authorization_code".equals(grantType)) {
 			// This is a token request.  			
 			smartApp = smartOnFhirApp.getSmartOnFhirApp(appId, redirectUri);
 			if (smartApp == null) {
@@ -460,6 +461,9 @@ public class SmartAuthServicesController {
 				// Expired. 400 respond with invalid_grant
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid_grant");
 			}
+		} else { 
+			// client_credentials
+			
 		}
 
 		// It is OK the access token is expired as long as the auth code is not expired.

@@ -22,8 +22,14 @@
 		<property name="suffix" value=".jsp" />
 	</bean>
 
-	<mvc:resources mapping="/pages/**"
-		location="/WEB-INF/pages/" />
+<!-- 
+	<mvc:resources mapping="/webjars/**"
+		location="classpath:/META-INF/resources/webjars/" />
+
+ -->
+	<mvc:resources mapping="/templates/**"
+		location="/WEB-INF/templates/" />
+		
 	<mvc:annotation-driven />
 
 </beans>

@@ -18,7 +18,6 @@
  */
 package edu.gatech.chai.omoponfhir.stu3.security;
 
-import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;

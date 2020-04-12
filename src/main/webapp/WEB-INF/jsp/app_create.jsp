@@ -5,155 +5,36 @@
 <head>
 <meta charset="UTF-8">
 <title>Application Setting - Create</title>
+<%@ include file="head-scripts.jsp"%>
 </head>
-<body>
+<body class='ui-widget'>
 	<%
-		String clientId = (String) request.getAttribute("client_id");
-		if (clientId != null && !clientId.isEmpty()) {
+	String clientId = (String) request.getAttribute("client_id");
+	if (clientId != null && !clientId.isEmpty()) {
 	%>
-	<p>Please Create Your App</p>
-	<p>
-	<form action="${base_url}/smart/app-new">
-		<b>Application Name</b><br /> &nbsp;&nbsp;<input type="text" name="app_name" value="${app_name}"><br />
-		<br /> 
-		<b>Client-id</b><br />
-		&nbsp;&nbsp;${client_id}<input type="hidden" name="client_id" value="${client_id}"><br />
-		<br/ >
-		<b>SMART Launch Uri</b><br />
-		&nbsp;&nbsp;<input type="text" name="launch_uri"><br />
-		<br />
-		<b>Redirect URI</b><br /> &nbsp;&nbsp;<input type="text" name="redirect_uri"><br /> 
-		<br /> 
-		<b>App Type</b><br /> 
-		&nbsp;&nbsp;<input type="radio" name="app_type" value="Provider">Provider<br /> 
-		&nbsp;&nbsp;<input type="radio" name="app_type" value="Patient">Patient<br />
-		<br /> 
-		<b>Standard Scopes</b><br /> 
-		&nbsp;&nbsp;launch profile openid online_access launch/patient(only for patient type)<br /> 
-		<br />
-		<table border=0 width="70%" >
-			<tr>
-				<td><b>User Scopes:</b>
-					<table width="100%" cellpadding="2" style="border:1px solid grey; border-collapse:collapse;">
-						<tr>
-							<th style="border:1px solid grey;">Resource</th>
-							<th style="border:1px solid grey;">Scope</th>
-						</tr>
-						<tr>
-							<td style="border:1px solid grey;">Condition</td>
-							<td style="border:1px solid grey;"><input type="checkbox" id="user_condition_r"
-								name="user_condition_r"> read&nbsp;&nbsp;<input type="checkbox" id="user_condition_w"
-								name="user_condition_w"> write</td>
-						</tr>
-						<tr>
-							<td style="border:1px solid grey;">DocumentReference</td>
-							<td style="border:1px solid grey;"><input type="checkbox" id="user_documentreference_r"
-								name="user_documentreference_r"> read&nbsp;&nbsp;<input type="checkbox" id="user_documentreference_w"
-								name="user_documentreference_w"> write</td>
-						</tr>
-						<tr>
-							<td style="border:1px solid grey;">Encounter</td>
-							<td style="border:1px solid grey;"><input type="checkbox" id="user_encounter_r"
-								name="user_encounter_r"> read&nbsp;&nbsp;<input type="checkbox" id="user_encounter_w"
-								name="user_encounter_w"> write</td>
-						</tr>
-						<tr>
-							<td style="border:1px solid grey;">MedicationStatement</td>
-							<td style="border:1px solid grey;"><input type="checkbox"
-								id="user_medicationstatement_r"
-								name="user_medicationstatement_r"> read&nbsp;&nbsp;<input type="checkbox" id="user_medicationstatement_w"
-								name="user_medicationstatement_w"> write</td>
-						</tr>
-						<tr>
-							<td style="border:1px solid grey;">MedicationRequest</td>
-							<td style="border:1px solid grey;"><input type="checkbox" id="user_medicationrequest_r"
-								name="user_medicationrequest_r"> read&nbsp;&nbsp;<input type="checkbox" id="user_medicationrequest_w"
-								name="user_medicationrequest_w"> write</td>
-						</tr>
-						<tr>
-							<td style="border:1px solid grey;">Observation</td>
-							<td style="border:1px solid grey;"><input type="checkbox" id="user_observation_r"
-								name="user_observation_r"> read&nbsp;&nbsp;<input type="checkbox" id="user_observation_w"
-								name="user_observation_w"> write</td>
-						</tr>
-						<tr>
-							<td style="border:1px solid grey;">Patient</td>
-							<td style="border:1px solid grey;"><input type="checkbox" id="user_patient_r"
-								name="user_patient_r"> read&nbsp;&nbsp;<input type="checkbox" id="user_patient_w"
-								name="user_patient_w"> write</td>
-						</tr>
-						<tr>
-							<td style="border:1px solid grey;">Procedure</td>
-							<td style="border:1px solid grey;"><input type="checkbox" id="user_procedure_r"
-								name="user_procedure_r"> read&nbsp;&nbsp;<input type="checkbox" id="user_procedure_w"
-								name="user_procedure_w"> write</td>
-						</tr>
-					</table></td>
-				<td><b>Patient Scopes:</b>
-					<table width="100%" cellpadding="2" style="border:1px solid grey; border-collapse:collapse;">
-						<tr>
-							<th style="border:1px solid grey;">Resource</th>
-							<th style="border:1px solid grey;">Scope</th>
-						</tr>
-						<tr>
-							<td style="border:1px solid grey;">Condition</td>
-							<td style="border:1px solid grey;"><input type="checkbox" id="patient_condition_r"
-								name="patient_condition_r"> read&nbsp;&nbps;<input type="checkbox" id="patient_condition_w"
-								name="patient_condition_w"> write</td>
-						</tr>
-						<tr>
-							<td style="border:1px solid grey;">DocumentReference</td>
-							<td style="border:1px solid grey;"><input type="checkbox" id="patient_documentreference_r"
-								name="patient_documentreference_r"> read&nbsp;&nbps;<input type="checkbox" id="patient_documentreference_w"
-								name="patient_documentreference_w"> write</td>
-						</tr>
-						<tr>
-							<td style="border:1px solid grey;">Encounter</td>
-							<td style="border:1px solid grey;"><input type="checkbox" id="patient_encounter_r"
-								name="patient_encounter_r"> read&nbsp;&nbps;<input type="checkbox" id="patient_encounter_w"
-								name="patient_encounter_w"> write</td>
-						</tr>
-						<tr>
-							<td style="border:1px solid grey;">MedicationStatement</td>
-							<td style="border:1px solid grey;"><input type="checkbox"
-								id="patient_medicationstatement_r"
-								name="patient_medicationstatement_r"> read&nbsp;&nbps;<input type="checkbox" id="patient_medicationstatement_w"
-								name="patient_medicationstatement_w"> write</td>
-						</tr>
-						<tr>
-							<td style="border:1px solid grey;">MedicationRequest</td>
-							<td style="border:1px solid grey;"><input type="checkbox" id="patient_medicationrequest_r"
-								name="patient_medicationrequest_r"> read&nbsp;&nbps;<input type="checkbox" id="patient_medicationrequest_w"
-								name="patient_medicationrequest_w"> write</td>
-						</tr>
-						<tr>
-							<td style="border:1px solid grey;">Observation</td>
-							<td style="border:1px solid grey;"><input type="checkbox" id="patient_observation_r"
-								name="patient_observation_r"> read&nbsp;&nbps;<input type="checkbox" id="patient_observation_w"
-								name="patient_observation_w"> write</td>
-						</tr>
-						<tr>
-							<td style="border:1px solid grey;">Patient</td>
-							<td style="border:1px solid grey;"><input type="checkbox" id="patient_patient_r"
-								name="patient_patient_r"> read&nbsp;&nbps;<input type="checkbox" id="patient_patient_w"
-								name="patient_patient_w"> write</td>
-						</tr>
-						<tr>
-							<td style="border:1px solid grey;">Procedure</td>
-							<td style="border:1px solid grey;"><input type="checkbox" id="patient_procedure_r"
-								name="patient_procedure_r"> read&nbsp;&nbps;<input type="checkbox" id="patient_procedure_w"
-								name="patient_procedure_w"> write</td>
-						</tr>
-					</table></td>
-			</tr>
-		</table>
-		<input type="submit" value="Create">
+
+	<jsp:include page="header.jsp">
+		<jsp:param name="file_name" value="app_create.jsp" />
+	</jsp:include>
+
+	<div style="padding: 10px;">
+	<form id="app-create" action="${base_url}/smart/app-new">
+		<jsp:include page="app_settings.jsp">
+			<jsp:param name="file_name" value="app_create.jsp" />
+		</jsp:include>
+		<jsp:include page="flow_settings.jsp">
+			<jsp:param name="file_name" value="app_create.jsp" />
+		</jsp:include>
+		<jsp:include page="scope_settings.jsp">
+			<jsp:param name="file_name" value="app_create.jsp" />
+		</jsp:include>
 	</form>
-	</p>
+	</div>
 	<%
 		} else {
 	%>
-	Unauthorized Access. <a href="${base_url}/smart/">Go to main page.</a>
+	Unauthorized Access.
+	<a href="${base_url}/smart/">Go to main page.</a>
 	<%
 		}
 	%>
