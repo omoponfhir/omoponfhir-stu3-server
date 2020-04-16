@@ -1,4 +1,4 @@
-package edu.gatech.chai.omoponfhir.smart.servlet;
+package edu.gatech.chai.omoponfhir.smart.servlet.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

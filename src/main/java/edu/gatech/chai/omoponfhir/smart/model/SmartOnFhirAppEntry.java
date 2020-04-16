@@ -1,7 +1,5 @@
 package edu.gatech.chai.omoponfhir.smart.model;
 
-import java.sql.Date;
-
 public class SmartOnFhirAppEntry {
 	private String appId;  // client-id in SMART on FHIR
 	private String appName;
