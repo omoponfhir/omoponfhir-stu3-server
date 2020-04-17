@@ -702,11 +702,14 @@ public class SmartAuthServicesController {
 		}
 
 		introspectResponse = new IntrospectResponse(true, smartApp.getScope());
-		String patient = getPatientIdFromJWT(smartSession.getAuthorizationCode());
-		if (patient != null && !patient.isEmpty()) {
-			introspectResponse.setPatient(patient);
+		String authorizationCode = smartSession.getAuthorizationCode();
+		if (authorizationCode != null && !authorizationCode.isEmpty()) {
+			String patient = getPatientIdFromJWT(authorizationCode);
+			if (patient != null && !patient.isEmpty()) {
+				introspectResponse.setPatient(patient);
+			}
 		}
-
+		
 		introspectResponse.setExp(expire / 1000);
 		introspectResponse.setTokenType("Bearer");
 
