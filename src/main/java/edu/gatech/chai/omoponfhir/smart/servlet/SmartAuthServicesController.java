@@ -563,8 +563,24 @@ public class SmartAuthServicesController {
 			String uuid = getNewUUID();
 			smartSession.setSessionId(uuid);
 			smartSession.setAppId(cilentId);
-			smartOnFhirSession.save(smartSession);
+			// we need to put access token now.
+			String myAccessToken = null;
+			boolean exists = true;
+			while (exists) {
+				myAccessToken = SmartAuthServicesController.generateNewToken();
+				if (smartOnFhirSession.getSmartOnFhirAppByToken(myAccessToken) == null)
+					exists = false;
+			}
+			
+			if (myAccessToken == null) {
+				logger.debug("jti is same as last one in active period (within exp)");
+				OAuth2Error error = new OAuth2Error("internal_error", "failed to create a token");
+				return new ResponseEntity<OAuth2Error>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+			
+			smartSession.setAccessToken(myAccessToken);
 
+			smartOnFhirSession.save(smartSession);
 			generateRefershToken = false; // SMART on FHIR backend service do not allow refresh token.
 		}
 
