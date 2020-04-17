@@ -273,7 +273,7 @@ public class Authorization {
 			// If the scope is not form of <patient or user>/<resource>.<access>, (eg)
 			// patient/*.read,
 			// then, we skip to next scope as this only evaluates the resource level check.
-			String patternString = "(user|patient)\\/[a-zA-Z*]+.(read|write|\\*)";
+			String patternString = "(user|patient|system)\\/[a-zA-Z*]+.(read|write|\\*)";
 			Pattern pattern = Pattern.compile(patternString);
 			Matcher matcher = pattern.matcher(scope);
 			if (matcher.matches() == false)
