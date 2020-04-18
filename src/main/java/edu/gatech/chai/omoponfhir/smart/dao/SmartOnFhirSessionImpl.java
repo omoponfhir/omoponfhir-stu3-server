@@ -28,7 +28,7 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 			pstmt.setString(5, sessionEntry.getAccessToken());
 			pstmt.setDate(6, sessionEntry.getAuthCodeExpirationDT());
 			pstmt.setDate(7, sessionEntry.getAccessTokenExpirationDT());
-			pstmt.setString(8,  sessionEntry.getRefreshToken());
+			pstmt.setString(8, sessionEntry.getRefreshToken());
 
 			pstmt.executeUpdate();
 
@@ -73,7 +73,7 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 			logger.error(e.getMessage());
 		}
 	}
-	
+
 	public void deleteByAppId(String appId) {
 		String sql = "DELETE FROM SmartOnFhirSession where app_id=?";
 
@@ -83,7 +83,32 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 			logger.info("Session Entry with appId (" + appId + ") deleted");
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
-		}		
+		}
+	}
+
+	public void purgeOldSession() {
+		// current time in epoch in milliseconds
+		Calendar calendar = Calendar.getInstance();
+		java.sql.Date now = new java.sql.Date(calendar.getTimeInMillis());
+
+		// time in 5 days ago
+		calendar.add(Calendar.DAY_OF_MONTH, -5);
+		java.sql.Date skewed = new java.sql.Date(calendar.getTimeInMillis());
+
+		String sql = "DELETE FROM SmartOnFhirSession WHERE (access_token is NULL) OR (access_token_expiration_dt<? "
+				+ "AND refresh_token is NULL) OR (access_token_expiration_dt < ? AND auth_code_expiration_dt < ?)";
+
+		try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+			pstmt.setDate(1, now);
+			pstmt.setDate(2, skewed);
+			pstmt.setDate(3, skewed);
+			int count = pstmt.executeUpdate();
+
+			logger.info(count + " sessions with old timestamps deleted");
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+		}
+
 	}
 
 	private SmartOnFhirSessionEntry createSessionEntry(ResultSet rs) throws SQLException {
@@ -96,10 +121,10 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 		appEntry.setAuthCodeExpirationDT(rs.getDate("auth_code_expiration_dt"));
 		appEntry.setAccessTokenExpirationDT(rs.getDate("access_token_expiration_dt"));
 		appEntry.setRefreshToken(rs.getString("refresh_token"));
-		
+
 		return appEntry;
 	}
-	
+
 	@Override
 	public List<SmartOnFhirSessionEntry> get() {
 		List<SmartOnFhirSessionEntry> appSessionList = new ArrayList<SmartOnFhirSessionEntry>();
@@ -164,7 +189,7 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 
 		return appSession;
 	}
-	
+
 	public List<SmartOnFhirSessionEntry> getSmartOnFhirSessionsByAppId(String appId) {
 		List<SmartOnFhirSessionEntry> appSessions = new ArrayList<SmartOnFhirSessionEntry>();
 
@@ -183,7 +208,7 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 
 		return appSessions;
 	}
-	
+
 	public SmartOnFhirSessionEntry getSmartOnFhirAppByToken(String token) {
 		SmartOnFhirSessionEntry sessionEntry = null;
 
@@ -240,7 +265,7 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 			pstmt.setString(3, appId);
 			pstmt.setString(4, authCode);
 			pstmt.executeUpdate();
-			
+
 			logger.info("Access Token is updated\nAccess Token:" + accessToken + "\nexpires in:" + expiresIn);
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
@@ -255,7 +280,7 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 			pstmt.setString(2, appId);
 			pstmt.setString(3, authCode);
 			pstmt.executeUpdate();
-			
+
 			logger.info("Refresh Token is updated\nRefresh Token:" + refreshToken);
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
@@ -269,24 +294,25 @@ public class SmartOnFhirSessionImpl extends BaseSmartOnFhir implements SmartOnFh
 			pstmt.setDate(1, timeoutDate);
 			pstmt.setString(2, sessionId);
 			pstmt.executeUpdate();
-			
+
 			logger.info("Access Token Timeout is updated\nSession Id:" + sessionId + " to " + timeoutDate);
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 		}
 	}
-	
+
 	public boolean exists(String sessionId) {
 		String sql = "SELECT * FROM SmartOnFhirSession where session_id=?";
 
 		try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 			pstmt.setString(1, sessionId);
 			ResultSet rs = pstmt.executeQuery();
-			if (rs.next()) return true;
+			if (rs.next())
+				return true;
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 		}
-		
+
 		return false;
 	}
 

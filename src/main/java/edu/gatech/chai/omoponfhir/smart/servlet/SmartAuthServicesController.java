@@ -390,6 +390,19 @@ public class SmartAuthServicesController {
 		return base64Encoder.encodeToString(randomBytes);
 	}
 
+	private String getAToken() {
+		String token = null;
+		
+		boolean exists = true;
+		while (exists) {
+			token = SmartAuthServicesController.generateNewToken();
+			if (smartOnFhirSession.getSmartOnFhirAppByToken(token) == null)
+				exists = false;
+		}
+		
+		return token;
+	}
+	
 	@RequestMapping(value = "/token", method = RequestMethod.POST, produces = "application/json")
 	@ResponseBody
 //	public String token(
@@ -402,6 +415,9 @@ public class SmartAuthServicesController {
 			@RequestParam(name = "client_assertion", required = false) String clientAssertion,
 			@RequestParam(name = "scope", required = false) String scope, Model model) {
 
+		// Purge any old sessions.
+		smartOnFhirSession.purgeOldSession();
+		
 //		// Alway pass this information so that JSP can route to correct endpoint
 //		model.addAttribute("base_url", baseUrl);
 
@@ -563,15 +579,9 @@ public class SmartAuthServicesController {
 			String uuid = getNewUUID();
 			smartSession.setSessionId(uuid);
 			smartSession.setAppId(cilentId);
-			// we need to put access token now.
-			String myAccessToken = null;
-			boolean exists = true;
-			while (exists) {
-				myAccessToken = SmartAuthServicesController.generateNewToken();
-				if (smartOnFhirSession.getSmartOnFhirAppByToken(myAccessToken) == null)
-					exists = false;
-			}
 			
+			// we need to put access token now.
+			String myAccessToken = getAToken();			
 			if (myAccessToken == null) {
 				logger.debug("jti is same as last one in active period (within exp)");
 				OAuth2Error error = new OAuth2Error("internal_error", "failed to create a token");
@@ -592,22 +602,12 @@ public class SmartAuthServicesController {
 		String refreshToken = smartSession.getRefreshToken();
 		Long expiration;
 		if (accessToken == null || accessToken.isEmpty()) {
-			boolean exists = true;
-			while (exists) {
-				accessToken = SmartAuthServicesController.generateNewToken();
-				if (smartOnFhirSession.getSmartOnFhirAppByToken(accessToken) == null)
-					exists = false;
-			}
+			accessToken = getAToken();
 			smartOnFhirSession.putAccessCode(appId, code, accessToken);
 
 			// Add new refresh token as well as the access token is new.
 			if (generateRefershToken) {
-				exists = true;
-				while (exists) {
-					refreshToken = SmartAuthServicesController.generateNewToken();
-					if (smartOnFhirSession.getSmartOnFhirAppByRefreshToken(refreshToken) == null)
-						exists = false;
-				}
+				refreshToken = getAToken();
 				smartOnFhirSession.putRefereshCode(appId, code, refreshToken);
 			}
 		}
@@ -645,13 +645,17 @@ public class SmartAuthServicesController {
 	}
 
 	@PostMapping(value = "/introspect")
-	public ResponseEntity<IntrospectResponse> introspect(HttpServletRequest request,
+	public ResponseEntity<?> introspect(HttpServletRequest request,
 			@RequestParam(name = "token", required = true) String token, Model model) {
 
 		// Check Basic authentication.
 		String authReq = request.getHeader("Authorization");
 		if (authReq == null || authReq.isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No Authorization Header");
+//			logger.debug("No Authorization Header found in the header.");
+//			OAuth2Error error = new OAuth2Error("invalid_client", "No Authorization Header");
+//			return new ResponseEntity<OAuth2Error>(error, HttpStatus.UNAUTHORIZED);
+			logger.info("Authorization header mising");
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authorization header mising");
 		}
 
 		IntrospectResponse introspectResponse = null;
@@ -684,21 +688,29 @@ public class SmartAuthServicesController {
 
 		SmartOnFhirSessionEntry smartSession = smartOnFhirSession.getSmartOnFhirAppByToken(token);
 		if (smartSession == null) {
-//			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid_client");
-			return new ResponseEntity<IntrospectResponse>(introspectResponse, HttpStatus.UNAUTHORIZED);
+			// We couldn't find a token. We send 200 OK with set this token inactive. 
+			// Put only active key.
+			// see Sec 2.2 of RFC 7662
+			introspectResponse = new IntrospectResponse();
+			introspectResponse.setActive(false);
+
+			return new ResponseEntity<IntrospectResponse>(introspectResponse, HttpStatus.OK);
 		}
 
 		SmartOnFhirAppEntry smartApp = smartOnFhirApp.getSmartOnFhirApp(smartSession.getAppId());
 		if (smartApp == null) {
-//			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid_client");
-			return new ResponseEntity<IntrospectResponse>(introspectResponse, HttpStatus.UNAUTHORIZED);
+			introspectResponse = new IntrospectResponse();
+			introspectResponse.setActive(false);
+
+			return new ResponseEntity<IntrospectResponse>(introspectResponse, HttpStatus.OK);
 		}
 
 		Long expire = smartSession.getAccessTokenExpirationDT().getTime();
 		if (expire <= now) {
-			// Expired. 401 respond with invalid_grant
-//			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid_grant");
-			return new ResponseEntity<IntrospectResponse>(introspectResponse, HttpStatus.UNAUTHORIZED);
+			introspectResponse = new IntrospectResponse();
+			introspectResponse.setActive(false);
+
+			return new ResponseEntity<IntrospectResponse>(introspectResponse, HttpStatus.OK);
 		}
 
 		introspectResponse = new IntrospectResponse(true, smartApp.getScope());

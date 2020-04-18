@@ -8,66 +8,6 @@ boolean disableIt = "app_view.jsp".equalsIgnoreCase(request.getParameter("file_n
 %>
 
 <script>
-function is_user_read_all_checked () {
-	if ($("#user_condition_r").is(":checked") 
-			&& $("#user_documentreference_r").is(":checked") 
-			&& $("#user_encounter_r").is(":checked")
-			&& $("#user_medicationstatement_r").is(":checked") 
-			&& $("#user_medicationrequest_r").is(":checked") 
-			&& $("#user_observation_r").is(":checked") 
-			&& $("#user_patient_r").is(":checked") 
-			&& $("#user_procedure_r").is(":checked")) {
-		return true;
-	}
-	
-	return false;
-}
-
-function is_user_write_all_checked () {
-	if ($("#user_condition_w").is(":checked") 
-			&& $("#user_documentreference_w").is(":checked") 
-			&& $("#user_encounter_w").is(":checked")
-			&& $("#user_medicationstatement_w").is(":checked") 
-			&& $("#user_medicationrequest_w").is(":checked") 
-			&& $("#user_observation_w").is(":checked") 
-			&& $("#user_patient_w").is(":checked") 
-			&& $("#user_procedure_w").is(":checked")) {
-		return true;
-	}
-	
-	return false;
-}
-
-function is_patient_read_all_checked () {
-	if ($("#patient_condition_r").is(":checked") 
-			&& $("#patient_documentreference_r").is(":checked") 
-			&& $("#patient_encounter_r").is(":checked")
-			&& $("#patient_medicationstatement_r").is(":checked") 
-			&& $("#patient_medicationrequest_r").is(":checked") 
-			&& $("#patient_observation_r").is(":checked") 
-			&& $("#patient_patient_r").is(":checked") 
-			&& $("#patient_procedure_r").is(":checked")) {
-		return true;
-	}
-	
-	return false;
-}
-
-function is_patient_write_all_checked () {
-	if ($("#patient_condition_w").is(":checked") 
-			&& $("#patient_documentreference_w").is(":checked") 
-			&& $("#patient_encounter_w").is(":checked")
-			&& $("#patient_medicationstatement_w").is(":checked") 
-			&& $("#patient_medicationrequest_w").is(":checked") 
-			&& $("#patient_observation_w").is(":checked") 
-			&& $("#patient_patient_w").is(":checked") 
-			&& $("#patient_procedure_w").is(":checked")) {
-		return true;
-	}
-	
-	return false;
-}
-
 function remove_user_all_from_selected () {
 	var scopes = $("#selected_scopes").val();
 	
@@ -352,6 +292,18 @@ function init_selected_scopes() {
 	$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim());	
 }
 
+function reset_scopes() {
+	var scopes = "";
+	$("#selected_scopes").val(scopes);
+	
+	scopes = update_user_r(scopes);
+	scopes = update_user_w(scopes);
+	scopes = update_patient_r(scopes);
+	scopes = update_patient_w(scopes);
+	
+	$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim());	
+}
+
 function update_scope_table_from_scope(scopes) {
 	var typeName = "user";
 	if ($("#app_type_radio_system").is(":checked")) {
@@ -385,82 +337,98 @@ function update_scope_table_from_scope(scopes) {
 	}
 
 	if (scopes.includes(typeName+"/Condition.read") 
-			|| scopes.includes(typeName+"/Condition.*")) {
+			|| scopes.includes(typeName+"/Condition.*")
+			|| scopes.includes(typeName+"/*.*")) {
 		$("#user_condition_r").prop("checked", true);
 	}
 	 
 	if (scopes.includes(typeName+"/DocumentReference.read") 
-			|| scopes.includes(typeName+"/DocumentReference.*")) {
+			|| scopes.includes(typeName+"/DocumentReference.*")
+			|| scopes.includes(typeName+"/*.*")) {
 		$("#user_documentreference_r").prop("checked", true);
 	}
 	
 	if (scopes.includes(typeName+"/Encounter.read") 
-			|| scopes.includes(typeName+"/Encounter.*")) {
+			|| scopes.includes(typeName+"/Encounter.*")
+			|| scopes.includes(typeName+"/*.*")) {
 		$("#user_encounter_r").prop("checked", true);
 	}
 	
 	if (scopes.includes(typeName+"/MedicationStatement.read") 
-			|| scopes.includes(typeName+"/MedicationStatement.*")) {
+			|| scopes.includes(typeName+"/MedicationStatement.*")
+			|| scopes.includes(typeName+"/*.*")) {
 		$("#user_medicationstatement_r").prop("checked", true);
 	}
 	
 	if (scopes.includes(typeName+"/MedicationRequest.read") 
-			|| scopes.includes(typeName+"/MedicationRequest.*")) {
+			|| scopes.includes(typeName+"/MedicationRequest.*")
+			|| scopes.includes(typeName+"/*.*")) {
 		$("#user_medicationrequest_r").prop("checked", true);
 	}
 	
 	if (scopes.includes(typeName+"/Observation.read") 
-			|| scopes.includes(typeName+"/Observation.*")) {
+			|| scopes.includes(typeName+"/Observation.*")
+			|| scopes.includes(typeName+"/*.*")) {
 		$("#user_observation_r").prop("checked", true);
 	}
 	
 	if (scopes.includes(typeName+"/Patient.read") 
-			|| scopes.includes(typeName+"/Patient.*")) {
+			|| scopes.includes(typeName+"/Patient.*")
+			|| scopes.includes(typeName+"/*.*")) {
 		$("#user_patient_r").prop("checked", true);
 	}
 	
 	if (scopes.includes(typeName+"/Procedure.read") 
-			|| scopes.includes(typeName+"/Procedure.*")) {
+			|| scopes.includes(typeName+"/Procedure.*")
+			|| scopes.includes(typeName+"/*.*")) {
 		$("#user_procedure_r").prop("checked", true);
 	}
 	
 	if (scopes.includes(typeName+"/Condition.write") 
-			|| scopes.includes(typeName+"/Condition.*")) {
+			|| scopes.includes(typeName+"/Condition.*")
+			|| scopes.includes(typeName+"/*.*")) {
 		$("#user_condition_w").prop("checked", true);
 	}
 	 
 	if (scopes.includes(typeName+"/DocumentReference.write") 
-			|| scopes.includes(typeName+"/DocumentReference.*")) {
+			|| scopes.includes(typeName+"/DocumentReference.*")
+			|| scopes.includes(typeName+"/*.*")) {
 		$("#user_documentreference_w").prop("checked", true);
 	}
 	
 	if (scopes.includes(typeName+"/Encounter.write") 
-			|| scopes.includes(typeName+"/Encounter.*")) {
+			|| scopes.includes(typeName+"/Encounter.*")
+			|| scopes.includes(typeName+"/*.*")) {
 		$("#user_encounter_w").prop("checked", true);
 	}
 	
 	if (scopes.includes(typeName+"/MedicationStatement.write") 
-			|| scopes.includes(typeName+"/MedicationStatement.*")) {
+			|| scopes.includes(typeName+"/MedicationStatement.*")
+			|| scopes.includes(typeName+"/*.*")) {
 		$("#user_medicationstatement_w").prop("checked", true);
 	}
 	
 	if (scopes.includes(typeName+"/MedicationRequest.write") 
-			|| scopes.includes(typeName+"/MedicationRequest.*")) {
+			|| scopes.includes(typeName+"/MedicationRequest.*")
+			|| scopes.includes(typeName+"/*.*")) {
 		$("#user_medicationrequest_w").prop("checked", true);
 	}
 	
 	if (scopes.includes(typeName+"/Observation.write") 
-			|| scopes.includes(typeName+"/Observation.*")) {
+			|| scopes.includes(typeName+"/Observation.*")
+			|| scopes.includes(typeName+"/*.*")) {
 		$("#user_observation_w").prop("checked", true);
 	}
 	
 	if (scopes.includes(typeName+"/Patient.write") 
-			|| scopes.includes(typeName+"/Patient.*")) {
+			|| scopes.includes(typeName+"/Patient.*")
+			|| scopes.includes(typeName+"/*.*")) {
 		$("#user_patient_w").prop("checked", true);
 	}
 	
 	if (scopes.includes(typeName+"/Procedure.write") 
-			|| scopes.includes(typeName+"/Procedure.*")) {
+			|| scopes.includes(typeName+"/Procedure.*")
+			|| scopes.includes(typeName+"/*.*")) {
 		$("#user_procedure_w").prop("checked", true);
 	}
 
@@ -471,75 +439,92 @@ function update_scope_table_from_scope(scopes) {
 	}
 	
 	if (scopes.includes("patient/DocumentReference.read") 
-			|| scopes.includes("patient/DocumentReference.*")) {
+			|| scopes.includes("patient/DocumentReference.*")
+			|| scopes.includes("patient/*.*")) {
 		$("#patient_documentreference_r").prop("checked", true);
 	}
 	
 	if (scopes.includes("patient/Encounter.read") 
-			|| scopes.includes("patient/Encounter.*")) {
+			|| scopes.includes("patient/Encounter.*")
+			|| scopes.includes("patient/*.*")) {
 		$("#patient_encounter_r").prop("checked", true);
 	}
 	
 	if (scopes.includes("patient/MedicationStatement.read") 
-			|| scopes.includes("patient/MedicationStatement.*")) {
+			|| scopes.includes("patient/MedicationStatement.*")
+			|| scopes.includes("patient/*.*")) {
 		$("#patient_medicationstatement_r").prop("checked", true);
 	}
 	
 	if (scopes.includes("patient/MedicationRequest.read") 
-			|| scopes.includes("patient/MedicationRequest.*")) {
+			|| scopes.includes("patient/MedicationRequest.*")
+			|| scopes.includes("patient/*.*")) {
 		$("#patient_medicationrequest_r").prop("checked", true);
 	}
 	
 	if (scopes.includes("patient/Observation.read") 
-			|| scopes.includes("patient/Observation.*")) {
+			|| scopes.includes("patient/Observation.*")
+			|| scopes.includes("patient/*.*")) {
 		$("#patient_observation_r").prop("checked", true);
 	}
 	
 	if (scopes.includes("patient/Patient.read") 
-			|| scopes.includes("patient/Patient.*")) {
+			|| scopes.includes("patient/Patient.*")
+			|| scopes.includes("patient/*.*")) {
 		$("#patient_patient_r").prop("checked", true);
 	}
 	
 	if (scopes.includes("patient/Procedure.read") 
-			|| scopes.includes("patient/Procedure.*")) {
+			|| scopes.includes("patient/Procedure.*")
+			|| scopes.includes("patient/*.*")) {
 		$("#patient_procedure_r").prop("checked", true);
 	}
 	
 	if (scopes.includes("patient/Condition.write") 
-			|| scopes.includes("patient/Condition.*")) {
+			|| scopes.includes("patient/Condition.*")
+			|| scopes.includes("patient/*.*")) {
 		$("#patient_condition_w").prop("checked", true);
 	}
 	
 	if (scopes.includes("patient/DocumentReference.write") 
-			|| scopes.includes("patient/DocumentReference.*")) {
+			|| scopes.includes("patient/DocumentReference.*")
+			|| scopes.includes("patient/*.*")) {
 		$("#patient_documentreference_w").prop("checked", true);
 	}
 	
 	if (scopes.includes("patient/Encounter.write") 
-			|| scopes.includes("patient/Encounter.*")) {
+			|| scopes.includes("patient/Encounter.*")
+			|| scopes.includes("patient/*.*")) {
 		$("#patient_encounter_w").prop("checked", true);
 	}
 	
 	if (scopes.includes("patient/MedicationStatement.write") 
-			|| scopes.includes("patient/MedicationStatement.*")) {
+			|| scopes.includes("patient/MedicationStatement.*")
+			|| scopes.includes("patient/*.*")) {
 		$("#patient_medicationstatement_w").prop("checked", true);
 	}
 	
 	if (scopes.includes("patient/MedicationRequest.write") 
-			|| scopes.includes("patient/MedicationRequest.*")) {
+			|| scopes.includes("patient/MedicationRequest.*")
+			|| scopes.includes("patient/*.*")) {
 		$("#patient_medicationrequest_w").prop("checked", true);
 	}
 	
 	if (scopes.includes("patient/Observation.write") 
-			|| scopes.includes("patient/Observation.*")) {
+			|| scopes.includes("patient/Observation.*")
+			|| scopes.includes("patient/*.*")) {
 		$("#patient_observation_w").prop("checked", true);
 	}
 	
-	if (scopes.includes("patient/Patient.write")) {
+	if (scopes.includes("patient/Patient.write")
+			|| scopes.includes("patient/Patient.*")
+			|| scopes.includes("patient/*.*")) {
 		$("#patient_patient_w").prop("checked", true);
 	}
 	
-	if (scopes.includes("patient/Procedure.write")) {
+	if (scopes.includes("patient/Procedure.write")
+			|| scopes.includes("patient/Procedure.*")
+			|| scopes.includes("patient/*.*")) {
 		$("#patient_procedure_w").prop("checked", true);
 	}
 
