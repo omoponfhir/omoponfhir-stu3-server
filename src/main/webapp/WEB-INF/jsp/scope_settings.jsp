@@ -8,6 +8,13 @@ boolean disableIt = "app_view.jsp".equalsIgnoreCase(request.getParameter("file_n
 %>
 
 <script>
+var userReadCheckBoxIds = ["#user_condition_r", "#user_documentreference_r", "#user_encounter_r", "#user_medicationstatement_r", "#user_medicationrequest_r", "#user_observation_r", "#user_patient_r", "#user_procedure_r"];
+var userWriteCheckBoxIds = ["#user_condition_w", "#user_documentreference_w", "#user_encounter_w", "#user_medicationstatement_w", "#user_medicationrequest_w", "#user_observation_w", "#user_patient_w", "#user_procedure_w"];
+var patientReadCheckBoxIds = ["#patient_condition_r", "#patient_documentreference_r", "#patient_encounter_r", "#patient_medicationstatement_r", "#patient_medicationrequest_r", "#patient_observation_r", "#patient_patient_r", "#patient_procedure_r"];
+var patientWriteCheckBoxIds = ["#patient_condition_w", "#patient_documentreference_w", "#patient_encounter_w", "#patient_medicationstatement_w", "#patient_medicationrequest_w", "#patient_observation_w", "#patient_patient_w", "#patient_procedure_w"];
+var resources = ["Condition", "DocumentReference", "Encounter", "MedicationStatement", "MedicationRequest", "Observation", "Patient", "Procedure"];
+
+
 function remove_user_all_from_selected () {
 	var scopes = $("#selected_scopes").val();
 	
@@ -16,11 +23,14 @@ function remove_user_all_from_selected () {
 	$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim());
 }
 
-function update_user_r (scopes) {
-	var typeName = "user";
+function update_user_r () {
+	var typeName = "user";	
+	
 	if ($("#app_type_radio_system").is(":checked")) {
 		typeName = "system";
 	}
+	
+	var scopes = "";
 	
 	if ($("#all_user_r").is(":checked")) {
 		if ($("#all_user_w").is(":checked")) {
@@ -279,19 +289,6 @@ function update_patient_w (scopes) {
 	return scopes;
 }
 
-function init_selected_scopes() {
-	remove_user_all_from_selected();
-	remove_patient_all_from_selected();
-	var scopes = $("#selected_scopes").val();
-	
-	scopes = update_user_r(scopes);
-	scopes = update_user_w(scopes);
-	scopes = update_patient_r(scopes);
-	scopes = update_patient_w(scopes);
-	
-	$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim());	
-}
-
 function reset_scopes() {
 	var scopes = "";
 	$("#selected_scopes").val(scopes);
@@ -304,236 +301,237 @@ function reset_scopes() {
 	$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim());	
 }
 
-function update_scope_table_from_scope(scopes) {
+function select_all_user_r_table() {
+	$("#all_user_r").prop("checked", true);	
+	
+	for (id of userReadCheckBoxIds) {
+		$(id).prop("checked", true);		
+	}
+}
+
+function deselect_all_user_r_table() {
+	$("#all_user_r").prop("checked", false);	
+
+	for (id of userReadCheckBoxIds) {
+		$(id).prop("checked", false);		
+	}
+}
+
+function select_all_user_w_table() {
+	$("#all_user_w").prop("checked", true);
+
+	for (id of userWriteCheckBoxIds) {
+		$(id).prop("checked", true);		
+	}
+}
+
+function deselect_all_user_w_table() {
+	$("#all_user_w").prop("checked", false);
+
+	for (id of userWriteCheckBoxIds) {
+		$(id).prop("checked", false);		
+	}
+}
+
+function select_all_patient_r_table() {
+	$("#all_patient_r").prop("checked", true);	
+	
+	for (id of patientReadCheckBoxIds) {
+		$(id).prop("checked", true);		
+	}
+}
+
+function deselect_all_patient_r_table() {
+	$("#all_patient_r").prop("checked", false);	
+	
+	for (id of patientReadCheckBoxIds) {
+		$(id).prop("checked", false);		
+	}
+}
+
+function select_all_patient_w_table() {
+	$("#all_patient_w").prop("checked", true);
+
+	for (id of patientWriteCheckBoxIds) {
+		$(id).prop("checked", true);		
+	}
+}
+
+function deselect_all_patient_w_table() {
+	$("#all_patient_w").prop("checked", false);
+	
+	for (id of patientWriteCheckBoxIds) {
+		$(id).prop("checked", false);		
+	}
+}
+
+function update_scope_table_from_scopes(scopes) {
+	var user_r_done = false;
+	var user_w_done = false;
+	var patient_r_done = false;
+	var patient_w_done = false;
+	
 	var typeName = "user";
+	
 	if ($("#app_type_radio_system").is(":checked")) {
 		typeName = "system";
 	}
 
 	if (scopes.includes(typeName+"/*.*")) {
-		$("#all_user_r").prop("checked", true);
-		$("#all_user_w").prop("checked", true);
-	}
-
-	if (scopes.includes(typeName+"/*.read")) {
-		$("#all_user_r").prop("checked", true);
-	}
-
-	if (scopes.includes(typeName+"/*.write")) {
-		$("#all_user_w").prop("checked", true);
+		select_all_user_r_table();
+		select_all_user_w_table();
+		user_r_done = true;
+		user_w_done = true;
 	}
 
 	if (scopes.includes("patient/*.*")) {
-		$("#all_patient_r").prop("checked", true);
-		$("#all_patient_w").prop("checked", true);
+		select_all_patient_r_table();
+		select_all_patient_w_table();
+		patient_r_done = true;
+		patient_w_done = true;
 	}
 
-	if (scopes.includes("patient/*.read")) {
-		$("#all_patient_r").prop("checked", true);
+	if (user_r_done && user_w_done && patient_r_done && patient_w_done) {
+		// all are selected. return
+		return;
 	}
 
-	if (scopes.includes("patient/*.write")) {
-		$("#all_patient_w").prop("checked", true);
+	if (scopes.includes(typeName+"/*.read") && user_r_done == false) {
+		select_all_user_r_table();
+		user_r_done = true;
 	}
 
-	if (scopes.includes(typeName+"/Condition.read") 
-			|| scopes.includes(typeName+"/Condition.*")
-			|| scopes.includes(typeName+"/*.*")) {
-		$("#user_condition_r").prop("checked", true);
-	}
-	 
-	if (scopes.includes(typeName+"/DocumentReference.read") 
-			|| scopes.includes(typeName+"/DocumentReference.*")
-			|| scopes.includes(typeName+"/*.*")) {
-		$("#user_documentreference_r").prop("checked", true);
-	}
-	
-	if (scopes.includes(typeName+"/Encounter.read") 
-			|| scopes.includes(typeName+"/Encounter.*")
-			|| scopes.includes(typeName+"/*.*")) {
-		$("#user_encounter_r").prop("checked", true);
-	}
-	
-	if (scopes.includes(typeName+"/MedicationStatement.read") 
-			|| scopes.includes(typeName+"/MedicationStatement.*")
-			|| scopes.includes(typeName+"/*.*")) {
-		$("#user_medicationstatement_r").prop("checked", true);
-	}
-	
-	if (scopes.includes(typeName+"/MedicationRequest.read") 
-			|| scopes.includes(typeName+"/MedicationRequest.*")
-			|| scopes.includes(typeName+"/*.*")) {
-		$("#user_medicationrequest_r").prop("checked", true);
-	}
-	
-	if (scopes.includes(typeName+"/Observation.read") 
-			|| scopes.includes(typeName+"/Observation.*")
-			|| scopes.includes(typeName+"/*.*")) {
-		$("#user_observation_r").prop("checked", true);
-	}
-	
-	if (scopes.includes(typeName+"/Patient.read") 
-			|| scopes.includes(typeName+"/Patient.*")
-			|| scopes.includes(typeName+"/*.*")) {
-		$("#user_patient_r").prop("checked", true);
-	}
-	
-	if (scopes.includes(typeName+"/Procedure.read") 
-			|| scopes.includes(typeName+"/Procedure.*")
-			|| scopes.includes(typeName+"/*.*")) {
-		$("#user_procedure_r").prop("checked", true);
-	}
-	
-	if (scopes.includes(typeName+"/Condition.write") 
-			|| scopes.includes(typeName+"/Condition.*")
-			|| scopes.includes(typeName+"/*.*")) {
-		$("#user_condition_w").prop("checked", true);
-	}
-	 
-	if (scopes.includes(typeName+"/DocumentReference.write") 
-			|| scopes.includes(typeName+"/DocumentReference.*")
-			|| scopes.includes(typeName+"/*.*")) {
-		$("#user_documentreference_w").prop("checked", true);
-	}
-	
-	if (scopes.includes(typeName+"/Encounter.write") 
-			|| scopes.includes(typeName+"/Encounter.*")
-			|| scopes.includes(typeName+"/*.*")) {
-		$("#user_encounter_w").prop("checked", true);
-	}
-	
-	if (scopes.includes(typeName+"/MedicationStatement.write") 
-			|| scopes.includes(typeName+"/MedicationStatement.*")
-			|| scopes.includes(typeName+"/*.*")) {
-		$("#user_medicationstatement_w").prop("checked", true);
-	}
-	
-	if (scopes.includes(typeName+"/MedicationRequest.write") 
-			|| scopes.includes(typeName+"/MedicationRequest.*")
-			|| scopes.includes(typeName+"/*.*")) {
-		$("#user_medicationrequest_w").prop("checked", true);
-	}
-	
-	if (scopes.includes(typeName+"/Observation.write") 
-			|| scopes.includes(typeName+"/Observation.*")
-			|| scopes.includes(typeName+"/*.*")) {
-		$("#user_observation_w").prop("checked", true);
-	}
-	
-	if (scopes.includes(typeName+"/Patient.write") 
-			|| scopes.includes(typeName+"/Patient.*")
-			|| scopes.includes(typeName+"/*.*")) {
-		$("#user_patient_w").prop("checked", true);
-	}
-	
-	if (scopes.includes(typeName+"/Procedure.write") 
-			|| scopes.includes(typeName+"/Procedure.*")
-			|| scopes.includes(typeName+"/*.*")) {
-		$("#user_procedure_w").prop("checked", true);
+	if (scopes.includes(typeName+"/*.write") && user_w_done == false) {
+		select_all_user_w_table();
+		user_w_done = true;
 	}
 
-	// for patient
-	if (scopes.includes("patient/Condition.read") 
-			|| scopes.includes("patient/Condition.*")) {
-		$("#patient_condition_r").prop("checked", true);
+
+	if (scopes.includes("patient/*.read") && patient_r_done == false) {
+		select_all_patient_r_table();
+		patient_r_done = true;
+	}
+
+	if (scopes.includes("patient/*.write") && patient_w_done == false) {
+		select_all_patient_w_table();
+		patient_w_done = true;
+	}
+
+	
+	for (i = 0; i < resources.length; i++) {
+		if (user_r_done == false) {
+			if (scopes.includes(typeName+"/"+resources[i]+".read")
+					|| scopes.includes(typeName+"/"+resources[i]+".*")) {
+				$(userReadCheckBoxIds[i]).prop("checked", true);
+			}
+		}
+		
+		if (user_w_done == false) {
+			if (scopes.includes(typeName+"/"+resources[i]+".write")
+					|| scopes.includes(typeName+"/"+resources[i]+".*")) {
+				$(userWriteCheckBoxIds[i]).prop("checked", true);
+			}
+		}
+		
+		if (patient_r_done == false) {
+			if (scopes.includes("patient/"+resources[i]+".read")
+					|| scopes.includes("patienbt/"+resources[i]+".*")) {
+				$(patientReadCheckBoxIds[i]).prop("checked", true);
+			}
+		}
+		
+		if (patient_w_done == false) {
+			if (scopes.includes("patient/"+resources[i]+".write")
+					|| scopes.includes("patienbt/"+resources[i]+".*")) {
+				$(patientWriteCheckBoxIds[i]).prop("checked", true);
+			}
+		}
+	}
+}
+
+function update_selected_scopes() {
+	// update selected_scopes from table.
+
+	var typeName = "user";
+	
+	if ($("#app_type_radio_system").is(":checked")) {
+		typeName = "system";
+	}
+
+	var user_r_scopes_done = false;
+	var user_w_scopes_done = false;
+	var patient_r_scopes_done = false;
+	var patient_w_scopes_done = false;
+
+	// update selected_scopes from table.
+	var scopes = "";
+	if ($("#all_user_r").is(":checked") && $("#all_user_w").is(":checked")) {
+		scopes = typeName + "/*.* ";
+		user_r_scopes_done = true;
+		user_w_scopes_done = true;
+	} else {
+		if ($("#all_user_r").is(":checked")) {
+			scopes = typeName + "/*.read ";
+			user_r_scopes_done = true;
+		} else if ($("#all_user_w").is(":checked")) {
+			scopes = typeName + "/*.write ";
+			user_w_scopes_done = true;
+		}
 	}
 	
-	if (scopes.includes("patient/DocumentReference.read") 
-			|| scopes.includes("patient/DocumentReference.*")
-			|| scopes.includes("patient/*.*")) {
-		$("#patient_documentreference_r").prop("checked", true);
+	if ($("#all_patient_r").is(":checked") && $("#all_patient_w").is(":checked")) {
+		scopes += "patient/*.* ";
+		patient_r_scopes_done = true;
+		patient_w_scopes_done = true;
+	} else {
+		if ($("#all_patient_r").is(":checked")) {
+			scopes += "patient/*.read ";
+			patient_r_scopes_done = true;
+		} else if ($("#all_patient_w").is(":checked")) {
+			scopes += "patient/*.write ";
+			patient_w_scopes_done = true;
+		}
 	}
 	
-	if (scopes.includes("patient/Encounter.read") 
-			|| scopes.includes("patient/Encounter.*")
-			|| scopes.includes("patient/*.*")) {
-		$("#patient_encounter_r").prop("checked", true);
+	if (!user_r_scopes_done || !user_w_scopes_done || !patient_r_scopes_done || !patient_w_scopes_done) {
+		for (i = 0; i < userReadCheckBoxIds.length; i++) {
+			if (!user_r_scopes_done) {
+				if ($(userReadCheckBoxIds[i]).is(":checked")) {
+					scopes += typeName+"/"+resources[i]+".read "
+				}
+			}
+			
+			if (!user_w_scopes_done) {
+				if ($(userWriteCheckBoxIds[i]).is(":checked")) {
+					scopes += typeName+"/"+resources[i]+".write "
+				}				
+			}
+			
+			if (!patient_r_scopes_done) {
+				if ($(patientReadCheckBoxIds[i]).is(":checked")) {
+					scopes += "patient/"+resources[i]+".read "
+				}				
+			}
+			
+			if (!patient_w_scopes_done) {
+				if ($(patientWriteCheckBoxIds[i]).is(":checked")) {
+					scopes += "patient/"+resources[i]+".write "
+				}				
+			}
+		}		
 	}
 	
-	if (scopes.includes("patient/MedicationStatement.read") 
-			|| scopes.includes("patient/MedicationStatement.*")
-			|| scopes.includes("patient/*.*")) {
-		$("#patient_medicationstatement_r").prop("checked", true);
+	if ("system" == typeName) {
+		// make sure we do not have patient and user changed to system.
+		scopes = scopes.replace(/patient\/([a-zA-Z]+|\*)\.(read|write|\*)/g, "");
+		scopes = scopes.replace("user", "system");
 	}
 	
-	if (scopes.includes("patient/MedicationRequest.read") 
-			|| scopes.includes("patient/MedicationRequest.*")
-			|| scopes.includes("patient/*.*")) {
-		$("#patient_medicationrequest_r").prop("checked", true);
-	}
-	
-	if (scopes.includes("patient/Observation.read") 
-			|| scopes.includes("patient/Observation.*")
-			|| scopes.includes("patient/*.*")) {
-		$("#patient_observation_r").prop("checked", true);
-	}
-	
-	if (scopes.includes("patient/Patient.read") 
-			|| scopes.includes("patient/Patient.*")
-			|| scopes.includes("patient/*.*")) {
-		$("#patient_patient_r").prop("checked", true);
-	}
-	
-	if (scopes.includes("patient/Procedure.read") 
-			|| scopes.includes("patient/Procedure.*")
-			|| scopes.includes("patient/*.*")) {
-		$("#patient_procedure_r").prop("checked", true);
-	}
-	
-	if (scopes.includes("patient/Condition.write") 
-			|| scopes.includes("patient/Condition.*")
-			|| scopes.includes("patient/*.*")) {
-		$("#patient_condition_w").prop("checked", true);
-	}
-	
-	if (scopes.includes("patient/DocumentReference.write") 
-			|| scopes.includes("patient/DocumentReference.*")
-			|| scopes.includes("patient/*.*")) {
-		$("#patient_documentreference_w").prop("checked", true);
-	}
-	
-	if (scopes.includes("patient/Encounter.write") 
-			|| scopes.includes("patient/Encounter.*")
-			|| scopes.includes("patient/*.*")) {
-		$("#patient_encounter_w").prop("checked", true);
-	}
-	
-	if (scopes.includes("patient/MedicationStatement.write") 
-			|| scopes.includes("patient/MedicationStatement.*")
-			|| scopes.includes("patient/*.*")) {
-		$("#patient_medicationstatement_w").prop("checked", true);
-	}
-	
-	if (scopes.includes("patient/MedicationRequest.write") 
-			|| scopes.includes("patient/MedicationRequest.*")
-			|| scopes.includes("patient/*.*")) {
-		$("#patient_medicationrequest_w").prop("checked", true);
-	}
-	
-	if (scopes.includes("patient/Observation.write") 
-			|| scopes.includes("patient/Observation.*")
-			|| scopes.includes("patient/*.*")) {
-		$("#patient_observation_w").prop("checked", true);
-	}
-	
-	if (scopes.includes("patient/Patient.write")
-			|| scopes.includes("patient/Patient.*")
-			|| scopes.includes("patient/*.*")) {
-		$("#patient_patient_w").prop("checked", true);
-	}
-	
-	if (scopes.includes("patient/Procedure.write")
-			|| scopes.includes("patient/Procedure.*")
-			|| scopes.includes("patient/*.*")) {
-		$("#patient_procedure_w").prop("checked", true);
-	}
+	$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim());
 
 }
 
 $(document).ready(function() {
-	// update scope tables with scope parameter.
-	update_scope_table_from_scope("<%=scope%>");
-	
 	$( function() {
 	    $( "input[type='checkbox']" ).checkboxradio({
 	      icon: false
@@ -545,13 +543,16 @@ $(document).ready(function() {
 	      icon: false
 	    });
 	});
+
+	// update scope tables with scope parameter passed from storage
+	update_scope_table_from_scopes("<%=scope%>");
 	
-	// init for first load.
-	init_selected_scopes();
+	// selected_scopes are always updated from tables.
+	update_selected_scopes();
 	
 	// follows are for app type changes.
 	$("input[id^='app_type_radio_']").change(function() {
-		init_selected_scopes();
+		update_selected_scopes();
 		
 		if ($("#app_type_radio_system").is(":checked")) {
 			var scopes = $("#selected_scopes").val();
@@ -571,61 +572,13 @@ $(document).ready(function() {
 			typeName = "system";
 		}
 
-		remove_user_all_from_selected();
-		var scopes  = $("#selected_scopes").val();
-
-		if ($("#all_user_r").is(":checked") && $("#all_user_w").is(":checked")) {
-			$("#user_condition_r").prop("checked", true); 
-			$("#user_documentreference_r").prop("checked", true); 
-			$("#user_encounter_r").prop("checked", true);
-			$("#user_medicationstatement_r").prop("checked", true); 
-			$("#user_medicationrequest_r").prop("checked", true); 
-			$("#user_observation_r").prop("checked", true); 
-			$("#user_patient_r").prop("checked", true); 
-			$("#user_procedure_r").prop("checked", true);
-
-			$("#user_condition_w").prop("checked", true); 
-			$("#user_documentreference_w").prop("checked", true); 
-			$("#user_encounter_w").prop("checked", true);
-			$("#user_medicationstatement_w").prop("checked", true); 
-			$("#user_medicationrequest_w").prop("checked", true); 
-			$("#user_observation_w").prop("checked", true); 
-			$("#user_patient_w").prop("checked", true); 
-			$("#user_procedure_w").prop("checked", true);
-
-			scopes += " "+typeName+"/*.*";
-			$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
-			
-			$("input[type='checkbox']").checkboxradio("refresh");
-
-			return;			
-		}
-		
 		if ($("#all_user_r").is(":checked")) {
-			$("#user_condition_r").prop("checked", true); 
-			$("#user_documentreference_r").prop("checked", true); 
-			$("#user_encounter_r").prop("checked", true);
-			$("#user_medicationstatement_r").prop("checked", true); 
-			$("#user_medicationrequest_r").prop("checked", true); 
-			$("#user_observation_r").prop("checked", true); 
-			$("#user_patient_r").prop("checked", true); 
-			$("#user_procedure_r").prop("checked", true);
-
-			scopes += " "+typeName+"/*.read";
+			select_all_user_r_table();
 		} else {
-			$("#user_condition_r").prop("checked", false); 
-			$("#user_documentreference_r").prop("checked", false); 
-			$("#user_encounter_r").prop("checked", false);
-			$("#user_medicationstatement_r").prop("checked", false); 
-			$("#user_medicationrequest_r").prop("checked", false); 
-			$("#user_observation_r").prop("checked", false); 
-			$("#user_patient_r").prop("checked", false); 
-			$("#user_procedure_r").prop("checked", false);
+			deselect_all_user_r_table()
 		}
 		
-		scopes = update_user_w(scopes);
-
-		$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
+		update_selected_scopes();
 		
 		$("input[type='checkbox']").checkboxradio("refresh");
 	});
@@ -636,331 +589,70 @@ $(document).ready(function() {
 			typeName = "system";
 		}
 
-		remove_user_all_from_selected();
-		var scopes  = $("#selected_scopes").val();
-
-		if ($("#all_user_r").is(":checked") && $("#all_user_w").is(":checked")) {
-			$("#user_condition_r").prop("checked", true); 
-			$("#user_documentreference_r").prop("checked", true); 
-			$("#user_encounter_r").prop("checked", true);
-			$("#user_medicationstatement_r").prop("checked", true); 
-			$("#user_medicationrequest_r").prop("checked", true); 
-			$("#user_observation_r").prop("checked", true); 
-			$("#user_patient_r").prop("checked", true); 
-			$("#user_procedure_r").prop("checked", true);
-
-			$("#user_condition_w").prop("checked", true); 
-			$("#user_documentreference_w").prop("checked", true); 
-			$("#user_encounter_w").prop("checked", true);
-			$("#user_medicationstatement_w").prop("checked", true); 
-			$("#user_medicationrequest_w").prop("checked", true); 
-			$("#user_observation_w").prop("checked", true); 
-			$("#user_patient_w").prop("checked", true); 
-			$("#user_procedure_w").prop("checked", true);
-
-			scopes += " "+typeName+"/*.*";
-			$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
-			
-			$("input[type='checkbox']").checkboxradio("refresh");
-
-			return;			
-		}
-		
 		if ($("#all_user_w").is(":checked")) {
-			$("#user_condition_w").prop("checked", true); 
-			$("#user_documentreference_w").prop("checked", true); 
-			$("#user_encounter_w").prop("checked", true);
-			$("#user_medicationstatement_w").prop("checked", true); 
-			$("#user_medicationrequest_w").prop("checked", true); 
-			$("#user_observation_w").prop("checked", true); 
-			$("#user_patient_w").prop("checked", true); 
-			$("#user_procedure_w").prop("checked", true);
-			
-			scopes += " "+typeName+"/*.write";
+			select_all_user_w_table();
 		} else {
-			$("#user_condition_w").prop("checked", false); 
-			$("#user_documentreference_w").prop("checked", false); 
-			$("#user_encounter_w").prop("checked", false);
-			$("#user_medicationstatement_w").prop("checked", false); 
-			$("#user_medicationrequest_w").prop("checked", false); 
-			$("#user_observation_w").prop("checked", false); 
-			$("#user_patient_w").prop("checked", false); 
-			$("#user_procedure_w").prop("checked", false);
+			deselect_all_user_w_table();
 		}
 		
-		scopes = update_user_r(scopes);
+		update_selected_scopes();
 
-		$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
-		
 		$("input[type='checkbox']").checkboxradio("refresh");
 	});
 	
 	$("input[id^='user_']").change(function() {
-		var typeName = "user";
-		if ($("#app_type_radio_system").is(":checked")) {
-			typeName = "system";
+		myId = $(this).attr('id');
+		if ($(this).is(":checked") == false) {
+			if (myId.endsWith("_r")) {
+				$("#all_user_r").prop("checked", false);
+			} else {
+				$("#all_user_w").prop("checked", false);
+			}
 		}
 
-		remove_user_all_from_selected();
-		var scopes  = $("#selected_scopes").val();
-		
-		if ($("#all_user_r").is(":checked") && $("#all_user_w").is(":checked")) {
-			$("#user_condition_r").prop("checked", true); 
-			$("#user_documentreference_r").prop("checked", true); 
-			$("#user_encounter_r").prop("checked", true);
-			$("#user_medicationstatement_r").prop("checked", true); 
-			$("#user_medicationrequest_r").prop("checked", true); 
-			$("#user_observation_r").prop("checked", true); 
-			$("#user_patient_r").prop("checked", true); 
-			$("#user_procedure_r").prop("checked", true);
+		update_selected_scopes();
 
-			$("#user_condition_w").prop("checked", true); 
-			$("#user_documentreference_w").prop("checked", true); 
-			$("#user_encounter_w").prop("checked", true);
-			$("#user_medicationstatement_w").prop("checked", true); 
-			$("#user_medicationrequest_w").prop("checked", true); 
-			$("#user_observation_w").prop("checked", true); 
-			$("#user_patient_w").prop("checked", true); 
-			$("#user_procedure_w").prop("checked", true);
-
-			scopes += " "+typeName+"/*.*";
-			$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
-			
-			$("input[type='checkbox']").checkboxradio("refresh");
-
-			return;			
-		}
-
-		if ($("#all_user_r").is(":checked")) {
-			$("#user_condition_r").prop("checked", true); 
-			$("#user_documentreference_r").prop("checked", true); 
-			$("#user_encounter_r").prop("checked", true);
-			$("#user_medicationstatement_r").prop("checked", true); 
-			$("#user_medicationrequest_r").prop("checked", true); 
-			$("#user_observation_r").prop("checked", true); 
-			$("#user_patient_r").prop("checked", true); 
-			$("#user_procedure_r").prop("checked", true);
-
-			scopes += " "+typeName+"/*.read";
-			$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
-		} else {
-			scopes = update_user_r(scopes);
-			
-			$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
-		}
-		
-		if ($("#all_user_w").is(":checked")) {
-			$("#user_condition_w").prop("checked", true); 
-			$("#user_documentreference_w").prop("checked", true); 
-			$("#user_encounter_w").prop("checked", true);
-			$("#user_medicationstatement_w").prop("checked", true); 
-			$("#user_medicationrequest_w").prop("checked", true); 
-			$("#user_observation_w").prop("checked", true); 
-			$("#user_patient_w").prop("checked", true); 
-			$("#user_procedure_w").prop("checked", true);
-			
-			scopes += " "+typeName+"/*.write";
-			$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
-		} else {
-			scopes = update_user_w(scopes);
-			
-			$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
-		}
-		
 		$("input[type='checkbox']").checkboxradio("refresh");
-
 	});
 	
 	// for patient scopes
 	$("#all_patient_r").change(function() {
-		remove_patient_all_from_selected();
-		var scopes  = $("#selected_scopes").val();
-
-		if ($("#all_patient_r").is(":checked") && $("#all_patient_w").is(":checked")) {
-			$("#patient_condition_r").prop("checked", true); 
-			$("#patient_documentreference_r").prop("checked", true); 
-			$("#patient_encounter_r").prop("checked", true);
-			$("#patient_medicationstatement_r").prop("checked", true); 
-			$("#patient_medicationrequest_r").prop("checked", true); 
-			$("#patient_observation_r").prop("checked", true); 
-			$("#patient_patient_r").prop("checked", true); 
-			$("#patient_procedure_r").prop("checked", true);
-
-			$("#patient_condition_w").prop("checked", true); 
-			$("#patient_documentreference_w").prop("checked", true); 
-			$("#patient_encounter_w").prop("checked", true);
-			$("#patient_medicationstatement_w").prop("checked", true); 
-			$("#patient_medicationrequest_w").prop("checked", true); 
-			$("#patient_observation_w").prop("checked", true); 
-			$("#patient_patient_w").prop("checked", true); 
-			$("#patient_procedure_w").prop("checked", true);
-
-			scopes += " patient/*.*";
-			$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
-			
-			$("input[type='checkbox']").checkboxradio("refresh");
-
-			return;			
-		}
-		
 		if ($("#all_patient_r").is(":checked")) {
-			$("#patient_condition_r").prop("checked", true); 
-			$("#patient_documentreference_r").prop("checked", true); 
-			$("#patient_encounter_r").prop("checked", true);
-			$("#patient_medicationstatement_r").prop("checked", true); 
-			$("#patient_medicationrequest_r").prop("checked", true); 
-			$("#patient_observation_r").prop("checked", true); 
-			$("#patient_patient_r").prop("checked", true); 
-			$("#patient_procedure_r").prop("checked", true);
-
-			scopes += " patient/*.read";
+			select_all_patient_r_table();
 		} else {
-			$("#patient_condition_r").prop("checked", false); 
-			$("#patient_documentreference_r").prop("checked", false); 
-			$("#patient_encounter_r").prop("checked", false);
-			$("#patient_medicationstatement_r").prop("checked", false); 
-			$("#patient_medicationrequest_r").prop("checked", false); 
-			$("#patient_observation_r").prop("checked", false); 
-			$("#patient_patient_r").prop("checked", false); 
-			$("#patient_procedure_r").prop("checked", false);
+			deselect_all_patient_r_table();
 		}
 		
-		scopes = update_patient_w(scopes);
-
-		$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
+		update_selected_scopes();
 		
 		$("input[type='checkbox']").checkboxradio("refresh");
 	});
 
 	$("#all_patient_w").change(function() {
-		remove_patient_all_from_selected();
-		var scopes  = $("#selected_scopes").val();
-
-		if ($("#all_patient_r").is(":checked") && $("#all_patient_w").is(":checked")) {
-			$("#patient_condition_r").prop("checked", true); 
-			$("#patient_documentreference_r").prop("checked", true); 
-			$("#patient_encounter_r").prop("checked", true);
-			$("#patient_medicationstatement_r").prop("checked", true); 
-			$("#patient_medicationrequest_r").prop("checked", true); 
-			$("#patient_observation_r").prop("checked", true); 
-			$("#patient_patient_r").prop("checked", true); 
-			$("#patient_procedure_r").prop("checked", true);
-
-			$("#patient_condition_w").prop("checked", true); 
-			$("#patient_documentreference_w").prop("checked", true); 
-			$("#patient_encounter_w").prop("checked", true);
-			$("#patient_medicationstatement_w").prop("checked", true); 
-			$("#patient_medicationrequest_w").prop("checked", true); 
-			$("#patient_observation_w").prop("checked", true); 
-			$("#patient_patient_w").prop("checked", true); 
-			$("#patient_procedure_w").prop("checked", true);
-
-			scopes += " patient/*.*";
-			$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
-			
-			$("input[type='checkbox']").checkboxradio("refresh");
-
-			return;			
-		}
-		
 		if ($("#all_patient_w").is(":checked")) {
-			$("#patient_condition_w").prop("checked", true); 
-			$("#patient_documentreference_w").prop("checked", true); 
-			$("#patient_encounter_w").prop("checked", true);
-			$("#patient_medicationstatement_w").prop("checked", true); 
-			$("#patient_medicationrequest_w").prop("checked", true); 
-			$("#patient_observation_w").prop("checked", true); 
-			$("#patient_patient_w").prop("checked", true); 
-			$("#patient_procedure_w").prop("checked", true);
-			
-			scopes += " patient/*.write";
+			select_all_patient_w_table()
 		} else {
-			$("#patient_condition_w").prop("checked", false); 
-			$("#patient_documentreference_w").prop("checked", false); 
-			$("#patient_encounter_w").prop("checked", false);
-			$("#patient_medicationstatement_w").prop("checked", false); 
-			$("#patient_medicationrequest_w").prop("checked", false); 
-			$("#patient_observation_w").prop("checked", false); 
-			$("#patient_patient_w").prop("checked", false); 
-			$("#patient_procedure_w").prop("checked", false);
+			deselect_all_patient_w_table();
 		}
 		
-		scopes = update_patient_r(scopes);
-
-		$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
+		update_selected_scopes()
 		
 		$("input[type='checkbox']").checkboxradio("refresh");
 	});
 	
 	$("input[id^='patient_']").change(function() {
-		remove_patient_all_from_selected();
-		var scopes  = $("#selected_scopes").val();
-		
-		if ($("#all_patient_r").is(":checked") && $("#all_patient_w").is(":checked")) {
-			$("#patient_condition_r").prop("checked", true); 
-			$("#patient_documentreference_r").prop("checked", true); 
-			$("#patient_encounter_r").prop("checked", true);
-			$("#patient_medicationstatement_r").prop("checked", true); 
-			$("#patient_medicationrequest_r").prop("checked", true); 
-			$("#patient_observation_r").prop("checked", true); 
-			$("#patient_patient_r").prop("checked", true); 
-			$("#patient_procedure_r").prop("checked", true);
-
-			$("#patient_condition_w").prop("checked", true); 
-			$("#patient_documentreference_w").prop("checked", true); 
-			$("#patient_encounter_w").prop("checked", true);
-			$("#patient_medicationstatement_w").prop("checked", true); 
-			$("#patient_medicationrequest_w").prop("checked", true); 
-			$("#patient_observation_w").prop("checked", true); 
-			$("#patient_patient_w").prop("checked", true); 
-			$("#patient_procedure_w").prop("checked", true);
-
-			scopes += " patient/*.*";
-			$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
-			
-			$("input[type='checkbox']").checkboxradio("refresh");
-
-			return;			
+		myId = $(this).attr('id');
+		if ($(this).is(":checked") == false) {
+			if (myId.endsWith("_r")) {
+				$("#all_patient_r").prop("checked", false);
+			} else {
+				$("#all_patient_w").prop("checked", false);
+			}
 		}
 
-		if ($("#all_patient_r").is(":checked")) {
-			$("#patient_condition_r").prop("checked", true); 
-			$("#patient_documentreference_r").prop("checked", true); 
-			$("#patient_encounter_r").prop("checked", true);
-			$("#patient_medicationstatement_r").prop("checked", true); 
-			$("#patient_medicationrequest_r").prop("checked", true); 
-			$("#patient_observation_r").prop("checked", true); 
-			$("#patient_patient_r").prop("checked", true); 
-			$("#patient_procedure_r").prop("checked", true);
+		update_selected_scopes();
 
-			scopes += " patient/*.read";
-			$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
-		} else {
-			scopes = update_patient_r(scopes);
-			
-			$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
-		}
-		
-		if ($("#all_patient_w").is(":checked")) {
-			$("#patient_condition_w").prop("checked", true); 
-			$("#patient_documentreference_w").prop("checked", true); 
-			$("#patient_encounter_w").prop("checked", true);
-			$("#patient_medicationstatement_w").prop("checked", true); 
-			$("#patient_medicationrequest_w").prop("checked", true); 
-			$("#patient_observation_w").prop("checked", true); 
-			$("#patient_patient_w").prop("checked", true); 
-			$("#patient_procedure_w").prop("checked", true);
-			
-			scopes += " patient/*.write";
-			$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
-		} else {
-			scopes = update_patient_w(scopes);
-			
-			$("#selected_scopes").val(scopes.replace(/\s+/g,' ').trim())
-		}
-		
 		$("input[type='checkbox']").checkboxradio("refresh");
-
 	});
 	
 });
