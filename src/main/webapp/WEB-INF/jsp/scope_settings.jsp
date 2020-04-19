@@ -531,6 +531,16 @@ function update_selected_scopes() {
 
 }
 
+function set_all_if_all_selected(ids, allId) {
+	for (id of ids) {
+		if ($(id).is(":checked") == false) {
+			return;
+		}
+	}
+	
+	$(allId).prop("checked", true);
+}
+
 $(document).ready(function() {
 	$( function() {
 	    $( "input[type='checkbox']" ).checkboxradio({
@@ -602,7 +612,13 @@ $(document).ready(function() {
 	
 	$("input[id^='user_']").change(function() {
 		myId = $(this).attr('id');
-		if ($(this).is(":checked") == false) {
+		if ($(this).is(":checked") == true) {
+			if (myId.endsWith("_r")) {
+				set_all_if_all_selected(userReadCheckBoxIds, "#all_user_r");
+			} else {
+				set_all_if_all_selected(userWriteCheckBoxIds, "#all_user_w");
+			}
+		} else {
 			if (myId.endsWith("_r")) {
 				$("#all_user_r").prop("checked", false);
 			} else {
@@ -642,7 +658,13 @@ $(document).ready(function() {
 	
 	$("input[id^='patient_']").change(function() {
 		myId = $(this).attr('id');
-		if ($(this).is(":checked") == false) {
+		if ($(this).is(":checked") == true) {
+			if (myId.endsWith("_r")) {
+				set_all_if_all_selected(patientReadCheckBoxIds, "#all_patient_r");
+			} else {
+				set_all_if_all_selected(patientWriteCheckBoxIds, "#all_patient_w");
+			}
+		} else {
 			if (myId.endsWith("_r")) {
 				$("#all_patient_r").prop("checked", false);
 			} else {

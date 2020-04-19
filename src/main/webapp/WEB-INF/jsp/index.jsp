@@ -14,7 +14,14 @@
 		<jsp:param name="fileName" value="index.jsp" />
 	</jsp:include>
 	<p>
-		<b>This page simulates SMART on FHIR Authorization Flows.</b>
+		<b>This page simulates SMART on FHIR Authorization Flows for the following Application Types</b>
+	</p>
+	<p>
+		<ul>
+			<li>Provide: EHR Initiated Launching.</li>
+			<li>Patient: Stand-along Launching</li>
+			<li>System: Back-end Service</li>
+		</ul>
 	</p>
 	<br />
 	<p>Registered Applications:</p>
@@ -29,7 +36,7 @@
 		<%
 			}
 		%>
-		<td><div style="width:200px; height:200px; background-color:#f0f0f0; line-height: 40px; text-align: center; padding: 5px; margin: 5px;"><a href="${base_url}/smart/app-view/?client_id=${appEntry.appId}">${appEntry.appName}<br/><br/>Application Type: ${appEntry.appType}</a></div></td>
+		<td><a style="text-decoration:none" href="${base_url}/smart/app-view/?client_id=${appEntry.appId}"><div style="width:200px; height:200px; background-color:#f0f0f0; line-height: 40px; text-align: center; padding: 5px; margin: 5px;">${appEntry.appName}<br/><br/>Application Type: ${appEntry.appType}</div></a></td>
 		<% 
 			if (4-mod == 1) {
 		%>
