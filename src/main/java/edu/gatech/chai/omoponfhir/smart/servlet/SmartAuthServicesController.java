@@ -18,17 +18,14 @@ package edu.gatech.chai.omoponfhir.smart.servlet;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.security.SecureRandom;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.SecretKey;
 import javax.servlet.http.HttpServletRequest;
-//import javax.servlet.annotation.WebServlet;
-import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.codec.binary.Base64;
 import org.json.JSONObject;
@@ -69,6 +66,7 @@ import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 
 /**
@@ -123,7 +121,7 @@ public class SmartAuthServicesController {
 
 		jwtSecret = System.getenv("JWT_SECRET");
 		if (jwtSecret == null) {
-			jwtSecret = "thisismysecret";
+			jwtSecret = "thisismysecretforhs256smartonfhirapp";
 		}
 
 		smartStyleUrl = System.getenv("SMART_STYLE_URL");
@@ -186,15 +184,16 @@ public class SmartAuthServicesController {
 	}
 
 	private String generateJWT(String launchContext, String scope, SmartOnFhirAppEntry smartApp) {
-		SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
+//		SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
 
 		long nowMillis = System.currentTimeMillis();
 		Date now = new Date(nowMillis);
 		Date expiration = new Date(nowMillis + 300000); // 5m later
 
-		byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(jwtSecret);
-		Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
-
+//		byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(jwtSecret);
+//		Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
+		SecretKey sharedSecret = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+		
 		JSONObject payload = new JSONObject();
 		JSONObject context = new JSONObject();
 		context.put("need_patient_banner", !simEhr);
@@ -210,8 +209,10 @@ public class SmartAuthServicesController {
 		payload.put("iat", now.getTime() / 1000);
 		payload.put("exp", expiration.getTime() / 1000);
 
+//		JwtBuilder jwtBuilder = Jwts.builder().setHeaderParam(Header.TYPE, Header.JWT_TYPE)
+//				.setPayload(payload.toString()).signWith(signingKey, signatureAlgorithm);
 		JwtBuilder jwtBuilder = Jwts.builder().setHeaderParam(Header.TYPE, Header.JWT_TYPE)
-				.setPayload(payload.toString()).signWith(signingKey, signatureAlgorithm);
+				.setPayload(payload.toString()).signWith(sharedSecret);
 		return jwtBuilder.compact();
 	}
 
@@ -415,9 +416,6 @@ public class SmartAuthServicesController {
 			@RequestParam(name = "client_assertion", required = false) String clientAssertion,
 			@RequestParam(name = "scope", required = false) String scope, Model model) {
 
-		// Purge any old sessions.
-		smartOnFhirSession.purgeOldSession();
-		
 //		// Alway pass this information so that JSP can route to correct endpoint
 //		model.addAttribute("base_url", baseUrl);
 
@@ -639,6 +637,9 @@ public class SmartAuthServicesController {
 		}
 
 		logger.debug("token: responding with " + tokenResponse.toString());
+		
+		// By this time, we should have a token in the session. Delete all old and garbage sessions.
+		smartOnFhirSession.purgeOldSession();
 
 		return new ResponseEntity<TokenResponse>(tokenResponse, HttpStatus.OK);
 //		return tokenResponse.toString();
