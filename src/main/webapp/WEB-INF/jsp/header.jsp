@@ -112,7 +112,7 @@
 </ul>
 
 <div id="dialog" style="display: none;" title="About">
-  <p>This page is to provide SMART on FHIR authorization flows. Currently, it supports
+  <p>This page is to provide SMART on FHIR authorization flows. Currently, we support
   provider (EHR-initiated), patient (stand-alone), and system (backend service).</p> 
   <p>Please use <a style="outline:none;" href="https://github.com/omoponfhir/omoponfhir-main/issues">this issue link</a> for any issues or needs.</p>
 </div>
