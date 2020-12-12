@@ -19,6 +19,7 @@ import java.util.*;
 
 import edu.gatech.chai.omoponfhir.security.OIDCInterceptor;
 import edu.gatech.chai.omoponfhir.omopv5.stu3.provider.*;
+import edu.gatech.chai.omoponfhir.omopv5.stu3.utilities.StaticValues;
 import edu.gatech.chai.omoponfhir.stu3.security.SMARTonFHIRConformanceStatement;
 
 import org.springframework.web.context.WebApplicationContext;
@@ -48,7 +49,7 @@ public class RestfulServlet extends RestfulServer {
 	 * Constructor
 	 */
 	public RestfulServlet() {
-		super(FhirContext.forDstu3());
+		super(StaticValues.myFhirContext);
 	}
 
 	/**
