@@ -951,10 +951,12 @@ public class SmartAuthServicesController {
 		return scope.trim();
 	}
 
-	private String makeScope(String selectedScopes) {
+	private String makeScope(String appType, String selectedScopes) {
 		// Just do the sanity check. And, remove any duplicates.
 		String[] scopes = selectedScopes.split(" ");
-		String scope = "";
+		String scope = "launch profile openid online_access ";
+		if ("Patient".equals(appType))
+			scope += "launch/patient ";
 
 		for (String scope_ : scopes) {
 			scope_ = scope_.trim().replaceAll("\\s+", " ");
@@ -1026,7 +1028,7 @@ public class SmartAuthServicesController {
 					patient_encounter_w, patient_medicationstatement_w, patient_medicationrequest_w,
 					patient_observation_w, patient_patient_w, patient_procedure_w);
 		} else {
-			scope = makeScope(selectedScopes);
+			scope = makeScope(appType, selectedScopes);
 		}
 
 		SmartOnFhirAppEntry appEntry = new SmartOnFhirAppEntry();
@@ -1121,7 +1123,7 @@ public class SmartAuthServicesController {
 					patient_encounter_w, patient_medicationstatement_w, patient_medicationrequest_w,
 					patient_observation_w, patient_patient_w, patient_procedure_w);
 		} else {
-			scope = makeScope(selectedScopes);
+			scope = makeScope(appType, selectedScopes);
 		}
 
 		SmartOnFhirAppEntry appEntry = smartOnFhirApp.getSmartOnFhirApp(appId);
