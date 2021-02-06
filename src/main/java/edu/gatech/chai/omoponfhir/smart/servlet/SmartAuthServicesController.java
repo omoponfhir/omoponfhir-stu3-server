@@ -306,7 +306,9 @@ public class SmartAuthServicesController {
 		String[] scopeEntries = scope.split(" ");
 		String myScope = smartApp.getScope();
 		for (String scopeEntry : scopeEntries) {
-			if (!myScope.contains(scopeEntry)) {
+			if (!(myScope.contains("user/*.*") && scopeEntry.startsWith("user/"))
+					&& !(myScope.contains("patient/*.*") && scopeEntry.startsWith("patient/"))
+					&& !myScope.contains(scopeEntry)) {
 				// Out of scope
 				try {
 					logger.info("scope, " + scopeEntry + ", is not valid");
