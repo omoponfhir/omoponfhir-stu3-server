@@ -130,8 +130,11 @@ public class RestfulServlet extends RestfulServer {
 		ConceptMapResourceProvider conceptMapResourceProvider = new ConceptMapResourceProvider();
 		providers.add(conceptMapResourceProvider);
 
-		ImmunizationResourceProvider immunizationMapResourceProvider = new ImmunizationResourceProvider();
-		providers.add(immunizationMapResourceProvider);
+		ImmunizationResourceProvider immunizationResourceProvider = new ImmunizationResourceProvider();
+		providers.add(immunizationResourceProvider);
+
+		AllergyIntoleranceResourceProvider allergyIntoleranceResourceProvider = new AllergyIntoleranceResourceProvider();
+		providers.add(allergyIntoleranceResourceProvider);
 
 		setResourceProviders(providers);
 
